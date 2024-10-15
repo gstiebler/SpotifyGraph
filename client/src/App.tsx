@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import _ from 'lodash';
 import logo from './logo.svg';
 import './App.css';
 import { AccessToken, Artist, Artists, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import * as d3 from 'd3';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = "http://localhost:3000/callback";
@@ -53,6 +54,20 @@ function App() {
     const relatedArtistsListMap = await Promise.all(getRelatedArtistsPromise);
   };
 
+
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  
+  useEffect(() => {
+    const svg = d3.select(svgRef.current);
+
+    svg.append("circle")
+       .attr("cx", 150)
+       .attr("cy", 70)
+       .attr("r", 50); 
+
+  }, []); 
+
+
   return (
     <BrowserRouter>
       <div className="App">
@@ -72,7 +87,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/callback" element={<Login />} />
           </Routes>
-
+          <svg ref={svgRef} width={500} height={300} />
           <img src={logo} className="App-logo" alt="logo" />
           <p>
             Edit <code>src/App.tsx</code> and save to reload.
