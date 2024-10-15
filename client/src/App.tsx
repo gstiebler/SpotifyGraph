@@ -1,7 +1,8 @@
 import React from 'react';
+import _ from 'lodash';
 import logo from './logo.svg';
 import './App.css';
-import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { AccessToken, Artist, Artists, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
@@ -34,11 +35,22 @@ function App() {
 
   const showSomethingClick = async () => {
     const api = SpotifyApi.withAccessToken(clientId, spotifyToken);
-    const tracks = await api.currentUser.tracks.savedTracks();
+    const tracks = await api.currentUser.tracks.savedTracks(50);
+    let artistsMap = new Map<string, SimplifiedArtist>();
     console.table(tracks.items.map((item) => ({
       name: item.track.name,
       artists: item.track.artists.map((artist) => artist.name).join(", "),
     })));
+
+    tracks.items.forEach((item) => {
+      item.track.artists.forEach((artist) => {
+        artistsMap.set(artist.id, artist);
+      });
+    });
+
+    const artistsIds = Array.from(artistsMap.keys());
+    const getRelatedArtistsPromise = await artistsIds.map(async (id) => [id, (await api.artists.relatedArtists(id)).artists]);
+    const relatedArtistsListMap = await Promise.all(getRelatedArtistsPromise);
   };
 
   return (
