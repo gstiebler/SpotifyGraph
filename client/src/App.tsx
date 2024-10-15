@@ -5,6 +5,10 @@ import './App.css';
 import { AccessToken, Artist, Artists, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import * as d3 from 'd3';
+import {
+  forceSimulation,
+  SimulationNodeDatum,
+} from "d3-force";
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = "http://localhost:3000/callback";
@@ -56,16 +60,32 @@ function App() {
 
 
   const svgRef = useRef<SVGSVGElement | null>(null);
-  
+
   useEffect(() => {
     const svg = d3.select(svgRef.current);
 
-    svg.append("circle")
-       .attr("cx", 150)
-       .attr("cy", 70)
-       .attr("r", 50); 
+    var width = 300, height = 300
+    var nodes = [{}, {}, {}, {}, {}]
 
-  }, []); 
+    var simulation = d3.forceSimulation(nodes)
+      .force('charge', d3.forceManyBody())
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .on('tick', ticked);
+
+      function ticked() {
+        svg
+          .selectAll('circle')
+          .data(nodes)
+          .join('circle')
+          .attr('r', 5)
+          .attr('cx', function(d: any) {
+            return d.x
+          })
+          .attr('cy', function(d: any) {
+            return d.y
+          });
+      }
+  }, []);
 
 
   return (
