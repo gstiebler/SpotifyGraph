@@ -2,6 +2,7 @@ import express from 'express';
 import { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 
 dotenv.config();
 
@@ -15,17 +16,17 @@ const port = 3000;
 const redirectUri = 'http://localhost:3000/callback'; // Must match your Spotify app settings
 
 app.get('/', (req: Request, res: Response) => {
-  // Construct the authorization URL
-  const authorizeUrl = `https://accounts.spotify.com/authorize?` +
-    new URLSearchParams({
-      response_type: 'code',
-      client_id: client_id,
-      scope: 'user-read-private user-read-email', // Add desired scopes
-      redirect_uri: redirectUri,
-    });
+    // Construct the authorization URL
+    const authorizeUrl = `https://accounts.spotify.com/authorize?` +
+        new URLSearchParams({
+            response_type: 'code',
+            client_id: client_id,
+            scope: 'user-library-read',
+            redirect_uri: redirectUri,
+        });
 
-  // Simple HTML page with a link to authorize
-  const html = `
+    // Simple HTML page with a link to authorize
+    const html = `
     <html>
       <head><title>Spotify Auth</title></head>
       <body>
@@ -33,48 +34,37 @@ app.get('/', (req: Request, res: Response) => {
       </body>
     </html>
   `;
-  res.send(html);
+    res.send(html);
 });
 
-app.get('/callback', (req: Request, res: Response) => {
-  const code = req.query.code;
-
-  if (typeof code !== 'string') {
-    res.status(400).send('Authorization code missing or invalid.');
-    return;
+async function savedTracks(api: SpotifyApi) {
+    const tracks = await api.currentUser.tracks.savedTracks();
+    console.table(tracks.items.map((item) => ({
+      name: item.track.name,
+      artists: item.track.artists.map((artist) => artist.name).join(", "),
+    })));
   }
 
-  // Make a POST request to the Spotify token endpoint
-  const tokenUrl = 'https://accounts.spotify.com/api/token';
-  const authString = `${client_id}:${client_secret}`;
-  const base64Auth = Buffer.from(authString).toString('base64');
+app.get('/callback', async (req: Request, res: Response) => {
+    const accessToken = req.query.code;
+    console.log(req.query);
+    console.log(req.body);
 
-  const requestBody = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code: code,
-    redirect_uri: redirectUri,
-  });
+    if (typeof accessToken !== 'string') {
+        res.status(400).send('Authorization code missing or invalid.');
+        return;
+    }
 
-  fetch(tokenUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${base64Auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: requestBody,
-  })
-  .then(response => response.json())
-  .then((data: any) => { // You might want to define a more specific type for 'data'
-    const accessToken = data.access_token;
-    // TODO: Use the access token to make API requests
-    res.send('Access token received: ' + accessToken);
-  })
-  .catch(error => {
-    console.error('Error exchanging code for token:', error);
-    res.status(500).send('Error exchanging code for token');
-  });
+    const sdk = SpotifyApi.withAccessToken(client_id, req.body); 
+    // const api = SpotifyApi.withUserAuthorization(client_id, redirectUri, ['user-library-read']);
+
+    const tracks = await sdk.currentUser.tracks.savedTracks();
+    console.table(tracks.items.map((item) => ({
+      name: item.track.name,
+      artists: item.track.artists.map((artist) => artist.name).join(", "),
+    })));
 });
 
 app.listen(port, () => {
-  console.log(`Server listening at http://localhost:${port}`);
+    console.log(`Server listening at http://localhost:${port}`);
 });
