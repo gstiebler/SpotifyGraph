@@ -6,8 +6,8 @@ import { SpotifyApi } from '@spotify/web-api-ts-sdk';
 
 dotenv.config();
 
-const client_id = process.env.CLIENT_ID!;
-const client_secret = process.env.CLIENT_SECRET!;
+const clientId = process.env.CLIENT_ID!;
+const clientSecret = process.env.CLIENT_SECRET!;
 
 const app = express();
 const port = 3000;
@@ -15,12 +15,15 @@ const port = 3000;
 // Spotify API credentials (replace with your actual values)
 const redirectUri = 'http://localhost:3000/callback'; // Must match your Spotify app settings
 
+
+const api = SpotifyApi.withClientCredentials(clientId, clientSecret);
+
 app.get('/', (req: Request, res: Response) => {
     // Construct the authorization URL
     const authorizeUrl = `https://accounts.spotify.com/authorize?` +
         new URLSearchParams({
             response_type: 'code',
-            client_id: client_id,
+            client_id: clientId,
             scope: 'user-library-read',
             redirect_uri: redirectUri,
         });
@@ -46,9 +49,11 @@ async function savedTracks(api: SpotifyApi) {
   }
 
 app.get('/callback', async (req: Request, res: Response) => {
-    const accessToken = req.query.code;
+    const code = req.query.code;
     console.log(req.query);
-    console.log(req.body);
+
+    const { accessToken, refreshToken } = await api.getAccessToken(code);
+
 
     if (typeof accessToken !== 'string') {
         res.status(400).send('Authorization code missing or invalid.');
