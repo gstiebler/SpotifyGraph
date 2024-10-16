@@ -5,10 +5,6 @@ import './App.css';
 import { AccessToken, Artist, Artists, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import * as d3 from 'd3';
-import {
-  forceSimulation,
-  SimulationNodeDatum,
-} from "d3-force";
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = "http://localhost:3000/callback";
@@ -28,6 +24,83 @@ function Login() {
 }
 
 let spotifyToken: AccessToken;
+
+
+
+const nodes = [
+  { name: 'A' },
+  { name: 'B' },
+  { name: 'C' },
+  { name: 'D' },
+  { name: 'E' },
+  { name: 'F' },
+  { name: 'G' },
+  { name: 'H' },
+] as any;
+
+const links = [
+  { source: 0, target: 1 },
+  { source: 0, target: 2 },
+  { source: 0, target: 3 },
+  { source: 1, target: 6 },
+  { source: 3, target: 4 },
+  { source: 3, target: 7 },
+  { source: 4, target: 5 },
+  { source: 4, target: 7 }
+]
+
+function executeD3(svg: any) {
+  const width = 400, height = 300
+  const simulation = d3.forceSimulation(nodes)
+    .force('charge', d3.forceManyBody().strength(-100))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('link', d3.forceLink().links(links))
+    .on('tick', () => ticked(svg));
+}
+
+function updateLinks(svg: any) {
+  const u = svg
+    .selectAll('line')
+    .data(links)
+    .join('line')
+    .attr('x1', function (d: any) {
+      return d.source.x
+    })
+    .attr('y1', function (d: any) {
+      return d.source.y
+    })
+    .attr('x2', function (d: any) {
+      return d.target.x
+    })
+    .attr('y2', function (d: any) {
+      return d.target.y
+    });
+}
+
+function updateNodes(svg: any) {
+  const u = svg
+    .selectAll('text')
+    .data(nodes)
+    .join('text')
+    .text(function (d: any) {
+      return d.name
+    })
+    .attr('x', function (d: any) {
+      return d.x
+    })
+    .attr('y', function (d: any) {
+      return d.y
+    })
+    .attr('dy', function (d: any) {
+      return 5
+    });
+}
+
+function ticked(svg: any) {
+  updateLinks(svg)
+  updateNodes(svg)
+}
+
 
 function App() {
 
@@ -64,27 +137,7 @@ function App() {
   useEffect(() => {
     const svg = d3.select(svgRef.current);
 
-    var width = 300, height = 300
-    var nodes = [{}, {}, {}, {}, {}]
-
-    var simulation = d3.forceSimulation(nodes)
-      .force('charge', d3.forceManyBody())
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .on('tick', ticked);
-
-      function ticked() {
-        svg
-          .selectAll('circle')
-          .data(nodes)
-          .join('circle')
-          .attr('r', 5)
-          .attr('cx', function(d: any) {
-            return d.x
-          })
-          .attr('cy', function(d: any) {
-            return d.y
-          });
-      }
+    executeD3(svg)
   }, []);
 
 
@@ -108,18 +161,6 @@ function App() {
             <Route path="/callback" element={<Login />} />
           </Routes>
           <svg ref={svgRef} width={500} height={300} />
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.tsx</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
           <button onClick={handleButtonClick}>Get User Profile</button>
           <button onClick={showSomethingClick}>Show something</button>
         </header>
