@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import _ from 'lodash';
 import './App.css';
 import { AccessToken, Artist, Artists, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
@@ -21,9 +21,6 @@ function Login() {
   console.log(window.location.href);
   return <h2>Login</h2>;
 }
-
-let spotifyToken: AccessToken;
-
 
 
 const nodes = [
@@ -103,32 +100,38 @@ function ticked(svg: any) {
 
 function App() {
 
-  const handleButtonClick = async () => {
-    SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (token: AccessToken) => {
-      spotifyToken = token;
-      console.log(token);
-    });
-  };
+  const [token, setToken] = useState<AccessToken | null>(null);
 
-  const showSomethingClick = async () => {
-    const api = SpotifyApi.withAccessToken(clientId, spotifyToken);
-    const tracks = await api.currentUser.tracks.savedTracks(50);
-    let artistsMap = new Map<string, SimplifiedArtist>();
-    console.table(tracks.items.map((item) => ({
-      name: item.track.name,
-      artists: item.track.artists.map((artist) => artist.name).join(", "),
-    })));
 
-    tracks.items.forEach((item) => {
-      item.track.artists.forEach((artist) => {
-        artistsMap.set(artist.id, artist);
+  useEffect(() => {
+
+    const getArtists = async () => {
+      const api = SpotifyApi.withAccessToken(clientId, token!);
+      const tracks = await api.currentUser.tracks.savedTracks(50);
+      let artistsMap = new Map<string, SimplifiedArtist>();
+      console.table(tracks.items.map((item) => ({
+        name: item.track.name,
+        artists: item.track.artists.map((artist) => artist.name).join(", "),
+      })));
+  
+      tracks.items.forEach((item) => {
+        item.track.artists.forEach((artist) => {
+          artistsMap.set(artist.id, artist);
+        });
       });
-    });
+  
+      const artistsIds = Array.from(artistsMap.keys());
+      const getRelatedArtistsPromise = await artistsIds.map(async (id) => [id, (await api.artists.relatedArtists(id)).artists]);
+      const relatedArtistsListMap = (await Promise.all(getRelatedArtistsPromise));
+      console.log(relatedArtistsListMap);
+    };
 
-    const artistsIds = Array.from(artistsMap.keys());
-    const getRelatedArtistsPromise = await artistsIds.map(async (id) => [id, (await api.artists.relatedArtists(id)).artists]);
-    const relatedArtistsListMap = await Promise.all(getRelatedArtistsPromise);
-  };
+    SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (spotifyToken: AccessToken) => {
+      setToken(token);
+      console.log(spotifyToken);
+      getArtists();
+    });
+  }, [token]);
 
 
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -161,8 +164,6 @@ function App() {
             <Route path="/callback" element={<Login />} />
           </Routes>
           <svg ref={svgRef} width={500} height={300} />
-          <button onClick={handleButtonClick}>Get User Profile</button>
-          <button onClick={showSomethingClick}>Show something</button>
         </header>
       </div>
     </BrowserRouter>
