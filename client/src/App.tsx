@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import _ from 'lodash';
-import logo from './logo.svg';
 import './App.css';
 import { AccessToken, Artist, Artists, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
@@ -39,22 +38,22 @@ const nodes = [
 ] as any;
 
 const links = [
-  { source: 0, target: 1 },
-  { source: 0, target: 2 },
-  { source: 0, target: 3 },
-  { source: 1, target: 6 },
-  { source: 3, target: 4 },
-  { source: 3, target: 7 },
-  { source: 4, target: 5 },
-  { source: 4, target: 7 }
-]
+  { source: nodes[0], target: nodes[1] },
+  { source: nodes[0], target: nodes[2] },
+  { source: nodes[0], target: nodes[3] },
+  { source: nodes[1], target: nodes[6] },
+  { source: nodes[3], target: nodes[4] },
+  { source: nodes[3], target: nodes[7] },
+  { source: nodes[4], target: nodes[5] },
+  { source: nodes[4], target: nodes[7] }
+];
 
 function executeD3(svg: any) {
-  const width = 400, height = 300
+  const width = 400, height = 300;
   const simulation = d3.forceSimulation(nodes)
     .force('charge', d3.forceManyBody().strength(-100))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('link', d3.forceLink().links(links))
+    .force('link', d3.forceLink(links).id((d: any) => d.index))
     .on('tick', () => ticked(svg));
 }
 
@@ -63,17 +62,18 @@ function updateLinks(svg: any) {
     .selectAll('line')
     .data(links)
     .join('line')
+    .style('stroke', 'black')
     .attr('x1', function (d: any) {
-      return d.source.x
+      return d.source.x;
     })
     .attr('y1', function (d: any) {
-      return d.source.y
+      return d.source.y;
     })
     .attr('x2', function (d: any) {
-      return d.target.x
+      return d.target.x;
     })
     .attr('y2', function (d: any) {
-      return d.target.y
+      return d.target.y;
     });
 }
 
@@ -83,24 +83,23 @@ function updateNodes(svg: any) {
     .data(nodes)
     .join('text')
     .text(function (d: any) {
-      return d.name
+      return d.name;
     })
     .attr('x', function (d: any) {
-      return d.x
+      return d.x;
     })
     .attr('y', function (d: any) {
-      return d.y
+      return d.y;
     })
     .attr('dy', function (d: any) {
-      return 5
+      return 5;
     });
 }
 
 function ticked(svg: any) {
-  updateLinks(svg)
-  updateNodes(svg)
+  updateNodes(svg);
+  updateLinks(svg);
 }
-
 
 function App() {
 
@@ -135,9 +134,10 @@ function App() {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
-    const svg = d3.select(svgRef.current);
-
-    executeD3(svg)
+    if (svgRef.current) {
+      const svg = d3.select(svgRef.current);
+      executeD3(svg);
+    }
   }, []);
 
 
