@@ -61,8 +61,6 @@ const App: React.FC = () => {
       localStorage.setItem('artistsMap', JSON.stringify(Array.from(artistsMapLocal.entries())));
       setArtistsMap(artistsMapLocal);
       setArtistsRelationshipPairs(artistsRelationshipPairsLocal);
-
-      console.log(relatedArtistsListMap);
     };
 
     SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (spotifyToken: AccessToken) => {

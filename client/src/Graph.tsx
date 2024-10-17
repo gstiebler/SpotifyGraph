@@ -1,39 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { SimplifiedArtist } from '@spotify/web-api-ts-sdk';
 
-const nodes = [
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-    {},
-] as any;
-
-const links = [
-    { source: nodes[0], target: nodes[1] },
-    { source: nodes[0], target: nodes[2] },
-    { source: nodes[0], target: nodes[3] },
-    { source: nodes[1], target: nodes[6] },
-    { source: nodes[3], target: nodes[4] },
-    { source: nodes[3], target: nodes[7] },
-    { source: nodes[4], target: nodes[5] },
-    { source: nodes[4], target: nodes[7] }
-];
-
-function executeD3(svg: any) {
+function executeD3(svg: any, nodes: any, links: any) {
     const width = 400, height = 300;
     const simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(-100))
         .force('center', d3.forceCenter(width / 2, height / 2))
         .force('link', d3.forceLink(links).id((d: any) => d.index))
-        .on('tick', () => ticked(svg));
+        .on('tick', () => ticked(svg, nodes, links));
 }
 
-function updateLinks(svg: any) {
+function updateLinks(svg: any, links: any) {
     const u = svg
         .selectAll('line')
         .data(links)
@@ -53,7 +31,7 @@ function updateLinks(svg: any) {
         });
 }
 
-function updateNodes(svg: any) {
+function updateNodes(svg: any, nodes: any) {
     const u = svg
         .selectAll('circle')
         .data(nodes)
@@ -68,26 +46,33 @@ function updateNodes(svg: any) {
         .style('fill', 'blue');
 }
 
-function ticked(svg: any) {
-    updateNodes(svg);
-    updateLinks(svg);
+function ticked(svg: any, nodes: any, links: any) {
+    updateNodes(svg, nodes);
+    updateLinks(svg, links);
 }
 
 
 export const Graph: React.FC<{
     artistsMap: Map<string, SimplifiedArtist>,
     artistsRelationshipPairs: string[][],
-}> = ({ artistsMap, artistsRelationshipPairs}) => {
+}> = ({ artistsMap, artistsRelationshipPairs }) => {
+    const nodes = Array.from(artistsMap.values()).map((artist, index) => ({ name: artist.name, id: artist.id, index }));
 
+    const nodesMap = new Map(nodes.map((node) => [node.id, node]));
+
+    const links = artistsRelationshipPairs.map(([sourceId, targetId]) => ({
+        source: nodesMap.get(sourceId),
+        target: nodesMap.get(targetId),
+    }));
 
     const svgRef = useRef<SVGSVGElement | null>(null);
 
     useEffect(() => {
         if (svgRef.current) {
             const svg = d3.select(svgRef.current);
-            executeD3(svg);
+            executeD3(svg, nodes, links);
         }
-    }, []);
+    }, [links, nodes]);
 
     return (
         <svg ref={svgRef} width={500} height={300} />
