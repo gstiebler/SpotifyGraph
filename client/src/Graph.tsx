@@ -2,13 +2,19 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { SimplifiedArtist } from '@spotify/web-api-ts-sdk';
 
+const width = 928;
+const height = 680;
+
+let simulation: any;
+
 function executeD3(svg: any, nodes: any, links: any) {
-    const width = 400, height = 300;
-    const simulation = d3.forceSimulation(nodes)
-        .force('charge', d3.forceManyBody().strength(-100))
+    simulation = d3.forceSimulation(nodes)
+        .force('charge', d3.forceManyBody())
         .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('link', d3.forceLink(links).id((d: any) => d.index))
-        .on('tick', () => ticked(svg, nodes, links));
+        .force('link', d3.forceLink(links).id((d: any) => d.id))
+        .on('tick', () => ticked(svg, nodes, links))
+        .force("x", d3.forceX())
+        .force("y", d3.forceY());
 }
 
 function updateLinks(svg: any, links: any) {
@@ -32,7 +38,7 @@ function updateLinks(svg: any, links: any) {
 }
 
 function updateNodes(svg: any, nodes: any) {
-    const u = svg
+    const node = svg
         .selectAll('circle')
         .data(nodes)
         .join('circle')
@@ -44,11 +50,36 @@ function updateNodes(svg: any, nodes: any) {
             return d.y;
         })
         .style('fill', 'blue');
+    node.call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
 }
 
 function ticked(svg: any, nodes: any, links: any) {
     updateNodes(svg, nodes);
     updateLinks(svg, links);
+}
+
+// Reheat the simulation when drag starts, and fix the subject position.
+function dragstarted(event: any) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    event.subject.fx = event.subject.x;
+    event.subject.fy = event.subject.y;
+}
+
+// Update the subject (dragged node) position during drag.
+function dragged(event: any) {
+    event.subject.fx = event.x;
+    event.subject.fy = event.y;
+}
+
+// Restore the target alpha so the simulation cools after dragging ends.
+// Unfix the subject position now that it’s no longer being dragged.
+function dragended(event: any) {
+    if (!event.active) simulation.alphaTarget(0);
+    event.subject.fx = null;
+    event.subject.fy = null;
 }
 
 
