@@ -1,8 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import _ from 'lodash';
+import React, { useEffect, useState } from 'react';
 import './App.css';
-import { AccessToken, Artist, Artists, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { AccessToken, Artist, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Graph } from './Graph';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
@@ -10,10 +9,6 @@ const redirectUri = "http://localhost:3000/callback";
 
 function Home() {
   return <h2>Home</h2>;
-}
-
-function About() {
-  return <h2>About</h2>;
 }
 
 function Login() {
@@ -79,29 +74,18 @@ const App: React.FC = () => {
     });
   }, []);
 
-
-
   return (
     <BrowserRouter>
       <div className="App">
         <header className="App-header">
-          <nav>
-            <ul>
-              <li>
-                <Link to="/">Home</Link>
-              </li>
-              <li>
-                <Link to="/about">About</Link>
-              </li>
-            </ul>
-          </nav>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
             <Route path="/callback" element={<Login />} />
           </Routes>
         </header>
-        <Graph artistsMap={artistsMap} artistsRelationshipPairs={artistsRelationshipPairs}/>
+        <div className="App-content">
+          <Graph className="Graph" artistsMap={artistsMap} artistsRelationshipPairs={artistsRelationshipPairs}/>
+        </div>
       </div>
     </BrowserRouter>
   );

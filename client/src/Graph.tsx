@@ -55,7 +55,8 @@ function ticked(svg: any, nodes: any, links: any) {
 export const Graph: React.FC<{
     artistsMap: Map<string, SimplifiedArtist>,
     artistsRelationshipPairs: string[][],
-}> = ({ artistsMap, artistsRelationshipPairs }) => {
+    className?: string
+}> = ({ artistsMap, artistsRelationshipPairs, className }) => {
     const nodes = Array.from(artistsMap.values()).map((artist, index) => ({ name: artist.name, id: artist.id, index }));
 
     const nodesMap = new Map(nodes.map((node) => [node.id, node]));
@@ -75,6 +76,6 @@ export const Graph: React.FC<{
     }, [links, nodes]);
 
     return (
-        <svg ref={svgRef} width={500} height={300} />
+        <svg ref={svgRef} className={className}></svg>
     );
 };
