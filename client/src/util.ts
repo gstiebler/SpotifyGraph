@@ -4,6 +4,7 @@ export async function getFromCacheOrCalculate<T>(key: string, calculate: () => P
         return JSON.parse(localStorage.getItem(key)!);
     }
     const value = await calculate();
-    localStorage.setItem(key, JSON.stringify(value));
+    const stringifiedValue = JSON.stringify(value);
+    localStorage.setItem(key, stringifiedValue);
     return value;
 }

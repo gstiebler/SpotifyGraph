@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { AccessToken, SimplifiedArtist, SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Graph } from './Graph';
-import { getArtists } from './Spotify';
+import { getArtists, SGArtist } from './Spotify';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = "http://localhost:3000/callback";
@@ -20,7 +20,7 @@ function Login() {
 
 const App: React.FC = () => {
 
-  const [artistsMap, setArtistsMap] = useState<Map<string, SimplifiedArtist>>(new Map());
+  const [artistsMap, setArtistsMap] = useState<Map<string, SGArtist>>(new Map());
   const [artistsRelationshipPairs, setArtistsRelationshipPairs] = useState<string[][]>([]);
 
   useEffect(() => {

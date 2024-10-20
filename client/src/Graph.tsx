@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { SimplifiedArtist } from '@spotify/web-api-ts-sdk';
+import { SGArtist } from './Spotify';
 
 const width = 2000;
 const height = 1000;
@@ -84,7 +84,7 @@ function dragended(event: any) {
 
 
 export const Graph: React.FC<{
-    artistsMap: Map<string, SimplifiedArtist>,
+    artistsMap: Map<string, SGArtist>,
     artistsRelationshipPairs: string[][],
     className?: string
 }> = ({ artistsMap, artistsRelationshipPairs, className }) => {
