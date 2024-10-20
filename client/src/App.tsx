@@ -37,6 +37,8 @@ const App: React.FC = () => {
     });
   }, []);
 
+  const sortedArtistsBySavedTracks = Array.from(artistsMap.values()).sort((a, b) => b.savedTrackCount - a.savedTrackCount);
+
   return (
     <BrowserRouter>
       <div className="App">
@@ -47,7 +49,24 @@ const App: React.FC = () => {
           </Routes>
         </header>
         <div className="App-content">
-          <Graph className="Graph" artistsMap={artistsMap} artistRelationships={artistRelationships} />
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>saved tracks</th>
+                <th>score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedArtistsBySavedTracks.map((artist) => (
+                <tr key={artist.id}>
+                  <td>{artist.name}</td>
+                  <td>{artist.savedTrackCount}</td>
+                  <td>{artist.score}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </BrowserRouter>
