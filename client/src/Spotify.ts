@@ -2,22 +2,26 @@ import _ from "lodash";
 import { AccessToken, Artist, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { getFromCacheOrCalculate } from "./util";
 
-const MAX_ARTISTS = 50;
+const MAX_ARTISTS = 100;
 const MAX_RELATED_ARTISTS = 5;
 
-export type SGArtist = {
+export type StoredArtist = {
     id: string;
     name: string;
 }
 
-const simplifiedArtistToSGArtist = (artist: SimplifiedArtist): SGArtist => {
+export interface ProcessedArtist extends StoredArtist {
+    savedTrackCount: number;
+}
+
+const simplifiedArtistToSGArtist = (artist: SimplifiedArtist): StoredArtist => {
     return {
         id: artist.id,
         name: artist.name
     };
 }
 
-const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Promise<Map<string, SGArtist>> => {
+const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Promise<Map<string, StoredArtist>> => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
     const tracks = [] as SavedTrack[];
     
@@ -30,7 +34,7 @@ const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Pr
         }
     }
 
-    let artistsMapLocal = new Map<string, SGArtist>();
+    let artistsMapLocal = new Map<string, StoredArtist>();
 
     for (const track of tracks) {
         for (const artist of track.track.artists) {
@@ -61,7 +65,7 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
         const mapResult = await getArtistsMapFromTracks(token, clientId);
         return [...mapResult.entries()];
     });
-    const artistsMapFromTracks = new Map<string, SGArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
+    const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
 
     const artistsIds = [...artistsMapFromTracks.keys()];    
     const relatedArtistsListOriginal = await getFromCacheOrCalculate('relatedArtists', () => {
@@ -70,17 +74,20 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
 
     const relatedArtistsList = relatedArtistsListOriginal.filter(({ artistId }) => artistsMapFromTracks.has(artistId));
     
-    const artistsMap = new Map<string, SGArtist>();
+    const artistsMap = new Map<string, ProcessedArtist>();
     // The value of the set is a string in the form of "artistId1-artistId2"
     const artistsRelationships = new Set<string>();
 
     for (const artist of artistsMapFromTracks.values()) {
-        artistsMap.set(artist.id, artist);
+        const previousCount = artistsMap.get(artist.id)?.savedTrackCount || 0;
+        artistsMap.set(artist.id, { ...artist, savedTrackCount: previousCount + 1 });
     }
 
     for (const { artistId, relatedArtists } of relatedArtistsList) {
         for (const relatedArtist of relatedArtists.slice(0, MAX_RELATED_ARTISTS)) {
-            artistsMap.set((relatedArtist as Artist).id, relatedArtist);
+            if (!artistsMap.has((relatedArtist as Artist).id)) {
+                artistsMap.set((relatedArtist as Artist).id, { ...relatedArtist, savedTrackCount: 0 });
+            }
             const artistKey = `${artistId}-${(relatedArtist as Artist).id}`;
             artistsRelationships.add(artistKey);
         }

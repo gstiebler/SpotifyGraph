@@ -1,23 +1,29 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { SGArtist } from './Spotify';
+import { ProcessedArtist } from './Spotify';
 
-const width = 2000;
-const height = 1000;
+const width = 1000;
+const height = 600;
+
+const forceCenterStrength = 0.1;
+const forceManyBodyStrength = -2000;
+
+type svgType = d3.Selection<SVGSVGElement, unknown, null, undefined>;
+type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, unknown>;
 
 let simulation: any;
 
-function executeD3(svg: any, nodes: any, links: any) {
+function executeD3(svg: svgType, nodes: any, links: any) {
     simulation = d3.forceSimulation(nodes)
-        .force('charge', d3.forceManyBody())
-        .force('center', d3.forceCenter(width / 2, height / 2).strength(0.1))
+        .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
+        .force('center', d3.forceCenter(width / 2, height / 2).strength(forceCenterStrength))
         .force('link', d3.forceLink(links).id((d: any) => d.id))
         .on('tick', () => ticked(svg, nodes, links))
-        .force("x", d3.forceX())
-        .force("y", d3.forceY());
+        .force("x", d3.forceX(10))
+        .force("y", d3.forceY(-10));
 }
 
-function updateLinks(svg: any, links: any) {
+function updateLinks(svg: svgType, links: any) {
     const u = svg
         .selectAll('line')
         .data(links)
@@ -37,26 +43,29 @@ function updateLinks(svg: any, links: any) {
         });
 }
 
-function updateNodes(svg: any, nodes: any) {
+function updateNodes(svg: svgType, nodes: any) {
     const node = svg
         .selectAll('circle')
         .data(nodes)
         .join('circle')
-        .attr('r', 5)
+        .attr('r', function (d: any) {
+            return d.savedTrackCount + 5;
+        })
         .attr('cx', function (d: any) {
             return d.x;
         })
         .attr('cy', function (d: any) {
             return d.y;
         })
-        .style('fill', 'blue');
-    node.call(d3.drag()
+        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'darkyellow');
+
+    (node as d3SelectionType).call(d3.drag<SVGCircleElement, unknown>()
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended));
 }
 
-function ticked(svg: any, nodes: any, links: any) {
+function ticked(svg: svgType, nodes: any, links: any) {
     updateLinks(svg, links);
     updateNodes(svg, nodes);
 }
@@ -84,11 +93,15 @@ function dragended(event: any) {
 
 
 export const Graph: React.FC<{
-    artistsMap: Map<string, SGArtist>,
+    artistsMap: Map<string, ProcessedArtist>,
     artistsRelationshipPairs: string[][],
     className?: string
 }> = ({ artistsMap, artistsRelationshipPairs, className }) => {
-    const nodes = Array.from(artistsMap.values()).map((artist, index) => ({ name: artist.name, id: artist.id, index }));
+    const nodes = Array.from(artistsMap.values()).map((artist, index) => ({ 
+        name: artist.name, 
+        id: artist.id, index,
+        savedTrackCount: artist.savedTrackCount,
+    }));
 
     const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
