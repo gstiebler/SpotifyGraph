@@ -12,6 +12,7 @@ export type StoredArtist = {
 
 export interface ProcessedArtist extends StoredArtist {
     savedTrackCount: number;
+    score: number;
 }
 
 export type ArtistRelationship = {
@@ -30,7 +31,7 @@ const simplifiedArtistToSGArtist = (artist: SimplifiedArtist): StoredArtist => {
 const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Promise<Map<string, StoredArtist>> => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
     const tracks = [] as SavedTrack[];
-    
+
     while (true) {
         const response = await api.currentUser.tracks.savedTracks(50, tracks.length);
         tracks.push(...response.items);
@@ -66,20 +67,20 @@ const getRelatedArtists = async (artistsIds: string[], api: SpotifyApi) => {
 
 export const getArtists = async (token: AccessToken, clientId: string) => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
-    
+
     const artistsMapFromTracksPairs = await getFromCacheOrCalculate('artistsMap', async () => {
         const mapResult = await getArtistsMapFromTracks(token, clientId);
         return [...mapResult.entries()];
     });
     const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
 
-    const artistsIds = [...artistsMapFromTracks.keys()];    
+    const artistsIds = [...artistsMapFromTracks.keys()];
     const relatedArtistsListOriginal = await getFromCacheOrCalculate('relatedArtists', () => {
         return getRelatedArtists(artistsIds, api);
     });
 
     const relatedArtistsList = relatedArtistsListOriginal.filter(({ artistId }) => artistsMapFromTracks.has(artistId));
-    
+
     const artistsMap = new Map<string, ProcessedArtist>();
     // The value of the set is a string in the form of "artistId1-artistId2"
     const artistsRelationshipsMap = new Map<string, ArtistRelationship>();
@@ -88,13 +89,26 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
 
     for (const artist of artistsMapFromTracks.values()) {
         const previousCount = artistsMap.get(artist.id)?.savedTrackCount || 0;
-        artistsMap.set(artist.id, { ...artist, savedTrackCount: previousCount + 1 });
+        const newSavedTrackCount = previousCount + 1;
+        artistsMap.set(artist.id, {
+            ...artist,
+            savedTrackCount: newSavedTrackCount,
+            score: newSavedTrackCount,
+        });
     }
 
     for (const { artistId, relatedArtists } of relatedArtistsList) {
+        const artist = artistsMap.get(artistId)!;
         for (const relatedArtist of relatedArtists.slice(0, MAX_RELATED_ARTISTS)) {
             if (!artistsMap.has((relatedArtist as Artist).id)) {
-                artistsMap.set((relatedArtist as Artist).id, { ...relatedArtist, savedTrackCount: 0 });
+                artistsMap.set((relatedArtist as Artist).id, {
+                    ...relatedArtist,
+                    savedTrackCount: 0,
+                    score: artist.savedTrackCount,
+                });
+            } else {
+                const relatedArtistOnMap = artistsMap.get((relatedArtist as Artist).id)!;
+                relatedArtistOnMap.score += artist.savedTrackCount;
             }
             const artistId1 = artistId;
             const artistId2 = (relatedArtist as Artist).id;
