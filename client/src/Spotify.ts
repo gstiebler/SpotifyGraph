@@ -2,6 +2,9 @@ import _ from "lodash";
 import { AccessToken, Artist, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { getFromCacheOrCalculate } from "./util";
 
+const MAX_ARTISTS = 50;
+const MAX_RELATED_ARTISTS = 5;
+
 export type SGArtist = {
     id: string;
     name: string;
@@ -58,12 +61,14 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
         const mapResult = await getArtistsMapFromTracks(token, clientId);
         return [...mapResult.entries()];
     });
-    const artistsMapFromTracks = new Map<string, SGArtist>(artistsMapFromTracksPairs);
+    const artistsMapFromTracks = new Map<string, SGArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
 
     const artistsIds = [...artistsMapFromTracks.keys()];    
-    const relatedArtistsList = await getFromCacheOrCalculate('relatedArtists', () => {
+    const relatedArtistsListOriginal = await getFromCacheOrCalculate('relatedArtists', () => {
         return getRelatedArtists(artistsIds, api);
     });
+
+    const relatedArtistsList = relatedArtistsListOriginal.filter(({ artistId }) => artistsMapFromTracks.has(artistId));
     
     const artistsMap = new Map<string, SGArtist>();
     // The value of the set is a string in the form of "artistId1-artistId2"
@@ -74,7 +79,7 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     }
 
     for (const { artistId, relatedArtists } of relatedArtistsList) {
-        for (const relatedArtist of relatedArtists) {
+        for (const relatedArtist of relatedArtists.slice(0, MAX_RELATED_ARTISTS)) {
             artistsMap.set((relatedArtist as Artist).id, relatedArtist);
             const artistKey = `${artistId}-${(relatedArtist as Artist).id}`;
             artistsRelationships.add(artistKey);
