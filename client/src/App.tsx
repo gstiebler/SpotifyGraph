@@ -30,19 +30,10 @@ const App: React.FC = () => {
         return;
       }
       console.log(spotifyToken);
-      if (localStorage.getItem('artistsMap')) {
-        const artistsMapLocal = new Map<string, SimplifiedArtist>(JSON.parse(localStorage.getItem('artistsMap')!));
-        const artistsRelationshipPairsLocal = JSON.parse(localStorage.getItem('artistsRelationshipPairs')!);
-        setArtistsMap(artistsMapLocal);
-        setArtistsRelationshipPairs(artistsRelationshipPairsLocal);
-      } else {
-        const { artistsMapLocal, artistsRelationshipPairsLocal } = await getArtists(spotifyToken, clientId);
+      const { artistsMap: artistsMapLocal, artistsRelationshipPairs: artistsRelationshipPairsLocal } = await getArtists(spotifyToken, clientId);
 
-        localStorage.setItem('artistsRelationshipPairs', JSON.stringify(artistsRelationshipPairsLocal));
-        localStorage.setItem('artistsMap', JSON.stringify(Array.from(artistsMapLocal.entries())));
-        setArtistsMap(artistsMapLocal);
-        setArtistsRelationshipPairs(artistsRelationshipPairsLocal);
-      }
+      setArtistsMap(artistsMapLocal);
+      setArtistsRelationshipPairs(artistsRelationshipPairsLocal);
     });
   }, []);
 
@@ -56,7 +47,7 @@ const App: React.FC = () => {
           </Routes>
         </header>
         <div className="App-content">
-          <Graph className="Graph" artistsMap={artistsMap} artistsRelationshipPairs={artistsRelationshipPairs}/>
+          <Graph className="Graph" artistsMap={artistsMap} artistsRelationshipPairs={artistsRelationshipPairs} />
         </div>
       </div>
     </BrowserRouter>

@@ -2,15 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { SimplifiedArtist } from '@spotify/web-api-ts-sdk';
 
-const width = 928;
-const height = 680;
+const width = 2000;
+const height = 1000;
 
 let simulation: any;
 
 function executeD3(svg: any, nodes: any, links: any) {
     simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody())
-        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('center', d3.forceCenter(width / 2, height / 2).strength(0.1))
         .force('link', d3.forceLink(links).id((d: any) => d.id))
         .on('tick', () => ticked(svg, nodes, links))
         .force("x", d3.forceX())
@@ -57,8 +57,8 @@ function updateNodes(svg: any, nodes: any) {
 }
 
 function ticked(svg: any, nodes: any, links: any) {
-    updateNodes(svg, nodes);
     updateLinks(svg, links);
+    updateNodes(svg, nodes);
 }
 
 // Reheat the simulation when drag starts, and fix the subject position.
