@@ -14,6 +14,12 @@ export interface ProcessedArtist extends StoredArtist {
     savedTrackCount: number;
 }
 
+export type ArtistRelationship = {
+    artistId1: string;
+    artistId2: string;
+    strength: number;
+};
+
 const simplifiedArtistToSGArtist = (artist: SimplifiedArtist): StoredArtist => {
     return {
         id: artist.id,
@@ -76,7 +82,9 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     
     const artistsMap = new Map<string, ProcessedArtist>();
     // The value of the set is a string in the form of "artistId1-artistId2"
-    const artistsRelationships = new Set<string>();
+    const artistsRelationshipsMap = new Map<string, ArtistRelationship>();
+    // artistId1 => artistId2, and artistId2 => artistId1
+    const artistsGraph = new Map<string, Set<string>>();
 
     for (const artist of artistsMapFromTracks.values()) {
         const previousCount = artistsMap.get(artist.id)?.savedTrackCount || 0;
@@ -88,10 +96,42 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
             if (!artistsMap.has((relatedArtist as Artist).id)) {
                 artistsMap.set((relatedArtist as Artist).id, { ...relatedArtist, savedTrackCount: 0 });
             }
-            const artistKey = `${artistId}-${(relatedArtist as Artist).id}`;
-            artistsRelationships.add(artistKey);
+            const artistId1 = artistId;
+            const artistId2 = (relatedArtist as Artist).id;
+            const artistKey = `${artistId1}-${artistId2}`;
+            artistsRelationshipsMap.set(artistKey, {
+                artistId1,
+                artistId2,
+                strength: 1
+            });
+            if (!artistsGraph.has(artistId1)) {
+                artistsGraph.set(artistId1, new Set());
+            }
+            if (!artistsGraph.has(artistId2)) {
+                artistsGraph.set(artistId2, new Set());
+            }
+            artistsGraph.get(artistId1)!.add(artistId2);
+            artistsGraph.get(artistId2)!.add(artistId1);
         }
     }
-    const artistsRelationshipPairs = Array.from(artistsRelationships).map((key) => key.split("-"));
-    return { artistsMap, artistsRelationshipPairs };
+
+    // increase the strength of the relationship between two artists for every artist they have in common
+    for (const [artist, relatedArtists] of artistsGraph) {
+        for (const relatedArtist of relatedArtists) {
+            const relatedArtistsNested = artistsGraph.get(relatedArtist)!;
+            for (const relatedArtistNested of relatedArtistsNested) {
+                if (relatedArtistNested === artist) {
+                    const key = `${artist}-${relatedArtist}`;
+                    const keyReversed = `${relatedArtist}-${artist}`;
+                    const strength = (artistsRelationshipsMap.get(key)?.strength || 0) + 1;
+                    artistsRelationshipsMap.set(key, { artistId1: artist, artistId2: relatedArtist, strength });
+
+                    const strength2 = (artistsRelationshipsMap.get(keyReversed)?.strength || 0) + 1;
+                    artistsRelationshipsMap.set(keyReversed, { artistId1: artist, artistId2: relatedArtist, strength: strength2 });
+                }
+            }
+        }
+    }
+
+    return { artistsMap, artistRelationships: [...artistsRelationshipsMap.values()] };
 };

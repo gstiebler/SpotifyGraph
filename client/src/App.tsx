@@ -3,7 +3,7 @@ import './App.css';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Graph } from './Graph';
-import { getArtists, ProcessedArtist } from './Spotify';
+import { ArtistRelationship, getArtists, ProcessedArtist } from './Spotify';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = "http://localhost:3000/callback";
@@ -21,7 +21,7 @@ function Login() {
 const App: React.FC = () => {
 
   const [artistsMap, setArtistsMap] = useState<Map<string, ProcessedArtist>>(new Map());
-  const [artistsRelationshipPairs, setArtistsRelationshipPairs] = useState<string[][]>([]);
+  const [artistRelationships, setArtistRelationships] = useState<ArtistRelationship[]>([]);
 
   useEffect(() => {
 
@@ -30,10 +30,10 @@ const App: React.FC = () => {
         return;
       }
       console.log(spotifyToken);
-      const { artistsMap: artistsMapLocal, artistsRelationshipPairs: artistsRelationshipPairsLocal } = await getArtists(spotifyToken, clientId);
+      const { artistsMap: artistsMapLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, clientId);
 
       setArtistsMap(artistsMapLocal);
-      setArtistsRelationshipPairs(artistsRelationshipPairsLocal);
+      setArtistRelationships(artistRelationshipsLocal);
     });
   }, []);
 
@@ -47,7 +47,7 @@ const App: React.FC = () => {
           </Routes>
         </header>
         <div className="App-content">
-          <Graph className="Graph" artistsMap={artistsMap} artistsRelationshipPairs={artistsRelationshipPairs} />
+          <Graph className="Graph" artistsMap={artistsMap} artistRelationships={artistRelationships} />
         </div>
       </div>
     </BrowserRouter>

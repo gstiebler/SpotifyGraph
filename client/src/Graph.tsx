@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { ProcessedArtist } from './Spotify';
+import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
 const width = 1000;
 const height = 600;
@@ -17,7 +17,11 @@ function executeD3(svg: svgType, nodes: any, links: any) {
     simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
         .force('center', d3.forceCenter(width / 2, height / 2).strength(forceCenterStrength))
-        .force('link', d3.forceLink(links).id((d: any) => d.id))
+        .force('link', d3.forceLink(links)
+            .id((d: any) => d.id)
+            .strength((d: any) => {
+                return d.strength * 0.1;
+            }))
         .on('tick', () => ticked(svg, nodes, links))
         .force("x", d3.forceX(10))
         .force("y", d3.forceY(-10));
@@ -57,7 +61,7 @@ function updateNodes(svg: svgType, nodes: any) {
         .attr('cy', function (d: any) {
             return d.y;
         })
-        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'darkyellow');
+        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'yellow');
 
     (node as d3SelectionType).call(d3.drag<SVGCircleElement, unknown>()
         .on("start", dragstarted)
@@ -94,9 +98,9 @@ function dragended(event: any) {
 
 export const Graph: React.FC<{
     artistsMap: Map<string, ProcessedArtist>,
-    artistsRelationshipPairs: string[][],
+    artistRelationships: ArtistRelationship[],
     className?: string
-}> = ({ artistsMap, artistsRelationshipPairs, className }) => {
+}> = ({ artistsMap, artistRelationships: artistsRelationships, className }) => {
     const nodes = Array.from(artistsMap.values()).map((artist, index) => ({ 
         name: artist.name, 
         id: artist.id, index,
@@ -105,9 +109,10 @@ export const Graph: React.FC<{
 
     const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
-    const links = artistsRelationshipPairs.map(([sourceId, targetId]) => ({
-        source: nodesMap.get(sourceId),
-        target: nodesMap.get(targetId),
+    const links = artistsRelationships.map((artistRelationships) => ({
+        source: nodesMap.get(artistRelationships.artistId1),
+        target: nodesMap.get(artistRelationships.artistId2),
+        strength: artistRelationships.strength,
     }));
 
     const svgRef = useRef<SVGSVGElement | null>(null);
