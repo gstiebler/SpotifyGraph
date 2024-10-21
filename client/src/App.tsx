@@ -37,7 +37,13 @@ const App: React.FC = () => {
     });
   }, []);
 
-  const sortedArtistsBySavedTracks = Array.from(artistsMap.values()).sort((a, b) => b.savedTrackCount - a.savedTrackCount);
+  const sortedArtistsBySavedTracks = Array.from(artistsMap.values()).sort((a, b) => {
+    const savedTracksDiff = b.savedTrackCount - a.savedTrackCount;
+    if (savedTracksDiff !== 0) {
+      return savedTracksDiff;
+    }
+    return b.score - a.score;
+  });
 
   return (
     <BrowserRouter>

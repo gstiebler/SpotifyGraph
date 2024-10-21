@@ -1,5 +1,12 @@
+import _ from "lodash";
 import { AccessToken, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/web-api-ts-sdk";
-import { getFromCacheOrCalculate } from "./util";
+const fs = require('fs');
+const path = require('path');
+import dotenv from 'dotenv';
+dotenv.config({ path: __dirname + '/../.env' });
+
+const clientId = process.env.CLIENT_ID!;
+const clientSecret = process.env.CLIENT_SECRET!;
 
 const MAX_ARTISTS = 10000;
 const MAX_RELATED_ARTISTS = 20;
@@ -28,58 +35,34 @@ const simplifiedArtistToSGArtist = (artist: SimplifiedArtist): StoredArtist => {
     };
 }
 
-const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Promise<Map<string, StoredArtist>> => {
-    const api = SpotifyApi.withAccessToken(clientId, token!);
-    const tracks = [] as SavedTrack[];
-
-    while (true) {
-        const response = await api.currentUser.tracks.savedTracks(50, tracks.length);
-        tracks.push(...response.items);
-        console.log(`Fetched ${tracks.length} tracks`);
-        if (!response.next) {
-            break;
-        }
-    }
-
-    let artistsMap = new Map<string, StoredArtist>();
-
-    for (const track of tracks) {
-        for (const artist of track.track.artists) {
-            const simplifiedArtist = simplifiedArtistToSGArtist(artist);
-            const previousCount = artistsMap.get(artist.id)?.savedTrackCount || 0;
-            artistsMap.set(artist.id, {
-                ...simplifiedArtist,
-                savedTrackCount: previousCount + 1
-            });
-        }
-    }
-
-    return artistsMap;
-}
-
 const getRelatedArtists = async (artistsIds: string[], api: SpotifyApi) => {
-    const result = [] as { artistId: string, relatedArtists: SimplifiedArtist[] }[];
+    let result = [];
+
     for (const id of artistsIds) {
         console.log(`Fetching related artists for ${id}`);
         const artists = (await api.artists.relatedArtists(id)).artists;
-        result.push({ artistId: id, relatedArtists: artists });
+        result.push({ artistId: id, relatedArtists: artists.map(simplifiedArtistToSGArtist) });
     }
     return result;
 }
 
-export const getArtists = async (token: AccessToken, clientId: string) => {
-    const api = SpotifyApi.withAccessToken(clientId, token!);
+export const getArtists = async () => {
+    const api = SpotifyApi.withClientCredentials(clientId, clientSecret);
 
-    const artistsMapFromTracksPairs = await getFromCacheOrCalculate('artistsMap', async () => {
-        const mapResult = await getArtistsMapFromTracks(token, clientId);
-        return [...mapResult.entries()];
-    });
+    const savedTracksPath = path.join(__dirname, '../data/savedTracks.json');
+    const savedTracksData = fs.readFileSync(savedTracksPath, 'utf-8');
+    const artistsMapFromTracksPairs = JSON.parse(savedTracksData);
     const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
 
     const artistsIds = [...artistsMapFromTracks.keys()];
-    const relatedArtistsListOriginal = await getFromCacheOrCalculate('relatedArtists', () => {
-        return getRelatedArtists(artistsIds, api);
-    });
+
+
+    const relatedArtistsPath = path.join(__dirname, '../data/artists.json');
+    const relatedArtistsData = fs.readFileSync(relatedArtistsPath, 'utf-8');
+    const relatedArtistsListOriginal = JSON.parse(relatedArtistsData) as { artistId: string, relatedArtists: StoredArtist[] }[];
+
+    // const relatedArtistsListOriginal = await getRelatedArtists(artistsIds, api);
+    // console.log(JSON.stringify(relatedArtistsListOriginal, null, 2));
 
     const relatedArtistsList = relatedArtistsListOriginal.filter(({ artistId }) => artistsMapFromTracks.has(artistId));
 
@@ -97,7 +80,6 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     }
 
     for (const { artistId, relatedArtists } of relatedArtistsList) {
-        console.log(`Processing related artists for ${artistId}`);
         const artist = artistsMap.get(artistId)!;
         for (const relatedArtist of relatedArtists.slice(0, MAX_RELATED_ARTISTS)) {
             if (!artistsMap.has(relatedArtist.id)) {
@@ -128,24 +110,41 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
             artistsGraph.get(artistId2)!.add(artistId1);
         }
     }
-
-    // increase the strength of the relationship between two artists for every artist they have in common
-    for (const [artist, relatedArtists] of artistsGraph) {
-        for (const relatedArtist of relatedArtists) {
-            const relatedArtistsNested = artistsGraph.get(relatedArtist)!;
-            for (const relatedArtistNested of relatedArtistsNested) {
-                if (relatedArtistNested === artist) {
-                    const key = `${artist}-${relatedArtist}`;
-                    const keyReversed = `${relatedArtist}-${artist}`;
-                    const strength = (artistsRelationshipsMap.get(key)?.strength || 0) + 1;
-                    artistsRelationshipsMap.set(key, { artistId1: artist, artistId2: relatedArtist, strength });
-
-                    const strength2 = (artistsRelationshipsMap.get(keyReversed)?.strength || 0) + 1;
-                    artistsRelationshipsMap.set(keyReversed, { artistId1: artist, artistId2: relatedArtist, strength: strength2 });
+    /*
+        // increase the strength of the relationship between two artists for every artist they have in common
+        for (const [artist, relatedArtists] of artistsGraph) {
+            for (const relatedArtist of relatedArtists) {
+                const relatedArtistsNested = artistsGraph.get(relatedArtist)!;
+                for (const relatedArtistNested of relatedArtistsNested) {
+                    if (relatedArtistNested === artist) {
+                        const key = `${artist}-${relatedArtist}`;
+                        const keyReversed = `${relatedArtist}-${artist}`;
+                        const strength = (artistsRelationshipsMap.get(key)?.strength || 0) + 1;
+                        artistsRelationshipsMap.set(key, { artistId1: artist, artistId2: relatedArtist, strength });
+    
+                        const strength2 = (artistsRelationshipsMap.get(keyReversed)?.strength || 0) + 1;
+                        artistsRelationshipsMap.set(keyReversed, { artistId1: artist, artistId2: relatedArtist, strength: strength2 });
+                    }
                 }
             }
+        }*/
+
+    const sortedArtistsBySavedTracks = Array.from(artistsMap.values()).sort((a, b) => {
+        const savedTracksDiff = b.savedTrackCount - a.savedTrackCount;
+        if (savedTracksDiff !== 0) {
+            return savedTracksDiff;
         }
-    }
+        return b.score - a.score;
+    });
+
+    console.table(sortedArtistsBySavedTracks.map(artist => ({
+        id: artist.id,
+        name: artist.name,
+        savedTrackCount: artist.savedTrackCount,
+        score: artist.score
+    })));
 
     return { artistsMap, artistRelationships: [...artistsRelationshipsMap.values()] };
 };
+
+getArtists();
