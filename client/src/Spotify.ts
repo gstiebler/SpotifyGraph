@@ -1,5 +1,6 @@
 import { AccessToken, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { getFromCacheOrCalculate } from "./util";
+import Dexie, { EntityTable } from 'dexie';
 
 const MAX_ARTISTS = 10000;
 const MAX_RELATED_ARTISTS = 20;
@@ -27,6 +28,18 @@ const simplifiedArtistToSGArtist = (artist: SimplifiedArtist): StoredArtist => {
         savedTrackCount: 0,
     };
 }
+
+interface RelatedArtists {
+    id: string;
+    relatedArtists: SimplifiedArtist[];
+}
+
+type SpotifyGraphDB = Dexie & {
+    spotifyGraph: EntityTable<
+        RelatedArtists,
+        'id' // primary key "id" (for the typings only)
+    >;
+};
 
 const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Promise<Map<string, StoredArtist>> => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
@@ -57,18 +70,43 @@ const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Pr
     return artistsMap;
 }
 
-const getRelatedArtists = async (artistsIds: string[], api: SpotifyApi) => {
+const getRelatedArtists = async (artistsIds: string[], api: SpotifyApi, db: SpotifyGraphDB) => {
     const result = [] as { artistId: string, relatedArtists: SimplifiedArtist[] }[];
     for (const id of artistsIds) {
         console.log(`Fetching related artists for ${id}`);
+        // Check if we have the data in the cache
+        const cachedData = await db.spotifyGraph.get(id);
+        if (cachedData) {
+            result.push({
+                artistId: id,
+                relatedArtists: cachedData.relatedArtists
+            });
+            continue;
+        }
+
+        const count = await db.spotifyGraph.count();
+        console.log(`Number of artists in the DB: ${count}`);
         const artists = (await api.artists.relatedArtists(id)).artists;
         result.push({ artistId: id, relatedArtists: artists });
+
+        await db.spotifyGraph.add({
+            id,
+            relatedArtists: artists
+        });
     }
     return result;
 }
 
 export const getArtists = async (token: AccessToken, clientId: string) => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
+
+    const db = new Dexie('spotifyGraph') as SpotifyGraphDB;
+    if (!db) {
+        throw new Error('Failed to open the database');
+    }
+    db.version(1).stores({
+        spotifyGraph: '++id'
+    });
 
     const artistsMapFromTracksPairs = await getFromCacheOrCalculate('artistsMap', async () => {
         const mapResult = await getArtistsMapFromTracks(token, clientId);
@@ -77,9 +115,7 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
 
     const artistsIds = [...artistsMapFromTracks.keys()];
-    const relatedArtistsListOriginal = await getFromCacheOrCalculate('relatedArtists', () => {
-        return getRelatedArtists(artistsIds, api);
-    });
+    const relatedArtistsListOriginal = await getRelatedArtists(artistsIds, api, db);
 
     const relatedArtistsList = relatedArtistsListOriginal.filter(({ artistId }) => artistsMapFromTracks.has(artistId));
 
