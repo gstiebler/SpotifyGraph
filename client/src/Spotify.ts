@@ -3,7 +3,7 @@ import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
 
 const MAX_ARTISTS = 10000;
-const MAX_RELATED_ARTISTS = 20;
+const MAX_RELATED_ARTISTS = 5;
 
 export type StoredArtist = {
     id: string;
@@ -13,6 +13,7 @@ export type StoredArtist = {
 
 export interface ProcessedArtist extends StoredArtist {
     score: number;
+    relatedArtists: string[];
 }
 
 export type ArtistRelationship = {
@@ -129,7 +130,17 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
         artistsMap.set(artist.id, {
             ...artist,
             score: artist.savedTrackCount,
+            relatedArtists: [],
         });
+    }
+
+    const calculateScore = (artist: ProcessedArtist) => {
+        return 1 + Math.log(artist.savedTrackCount);
+    }
+
+    const formatRelatedArtistToList = (relatedArtist: ProcessedArtist) => {
+        const score = calculateScore(relatedArtist);
+        return `${relatedArtist.name} (${score.toFixed(2)})`;
     }
 
     for (const { artistId, relatedArtists } of relatedArtistsList) {
@@ -140,11 +151,13 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
                 artistsMap.set(relatedArtist.id, {
                     ...relatedArtist,
                     savedTrackCount: 0,
-                    score: artist.savedTrackCount,
+                    score: calculateScore(artist),
+                    relatedArtists: [formatRelatedArtistToList(artist)],
                 });
             } else {
                 const relatedArtistOnMap = artistsMap.get(relatedArtist.id)!;
-                relatedArtistOnMap.score += artist.savedTrackCount;
+                relatedArtistOnMap.score += calculateScore(artist);
+                relatedArtistOnMap.relatedArtists.push(formatRelatedArtistToList(artist));
             }
             const artistId1 = artistId;
             const artistId2 = relatedArtist.id;

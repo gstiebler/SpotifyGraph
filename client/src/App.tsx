@@ -69,6 +69,7 @@ const App: React.FC = () => {
                   <td>{artist.name}</td>
                   <td>{artist.savedTrackCount}</td>
                   <td>{artist.score}</td>
+                  <td>{artist.relatedArtists.join(", ")}</td>
                 </tr>
               ))}
             </tbody>
