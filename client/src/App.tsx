@@ -8,16 +8,6 @@ import { ArtistRelationship, getArtists, ProcessedArtist } from './Spotify';
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = "http://localhost:3000/callback";
 
-function Home() {
-  return <h2>Home</h2>;
-}
-
-function Login() {
-  // print the access token
-  console.log(window.location.href);
-  return <h2>Login</h2>;
-}
-
 const App: React.FC = () => {
 
   const [artistsList, setArtistsList] = useState<ProcessedArtist[]>([]);
@@ -51,7 +41,7 @@ const App: React.FC = () => {
         <div className="App-content">
           {activeTab === 'graph' && (
             <div className="tab-content">
-              <Graph artistsRelationships={artistRelationships} artistsList={artistsList} />
+              <Graph artistsRelationships={artistRelationships} artistsList={artistsList} className="Graph" />
             </div>
           )}
           {activeTab === 'table' && (

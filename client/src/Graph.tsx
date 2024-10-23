@@ -2,9 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
-const width = 1000;
-const height = 600;
-
 const forceCenterStrength = 0.1;
 const forceManyBodyStrength = -2000;
 
@@ -14,6 +11,9 @@ type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, un
 let simulation: any;
 
 function executeD3(svg: svgType, nodes: any, links: any) {
+    const width = parseInt(svg.style('width'));
+    const height = parseInt(svg.style('height'));
+
     simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
         .force('center', d3.forceCenter(width / 2, height / 2).strength(forceCenterStrength))
@@ -95,7 +95,6 @@ function dragended(event: any) {
     event.subject.fy = null;
 }
 
-
 export const Graph: React.FC<{
     artistsList: ProcessedArtist[],
     artistsRelationships: ArtistRelationship[],
@@ -127,6 +126,7 @@ export const Graph: React.FC<{
     useEffect(() => {
         if (svgRef.current) {
             const svg = d3.select(svgRef.current);
+            svg.attr('width', '100%').attr('height', '100%');
             executeD3(svg, nodes, links);
         }
     }, [links, nodes]);
