@@ -42,47 +42,45 @@ const App: React.FC = () => {
     <BrowserRouter>
       <div className="App">
         <header className="App-header">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/callback" element={<Login />} />
-          </Routes>
+          <h1>Artist Data</h1>
+          <div className="tabs">
+            <button className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>Graph</button>
+            <button className={activeTab === 'table' ? 'active' : ''} onClick={() => setActiveTab('table')}>Table</button>
+          </div>
         </header>
         <div className="App-content">
-          <h1>Artist Data</h1>
-          <div className="tabs"></div>
-          <button onClick={() => setActiveTab('graph')}>Graph</button>
-          <button onClick={() => setActiveTab('table')}>Table</button>
-        </div>
-        {activeTab === 'graph' && (
-          <div className="tab-content">
-            <Graph artistsRelationships={artistRelationships} artistsList={artistsList} />
-          </div>
-        )}
-        {activeTab === 'table' && (
-          <div className="tab-content">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>saved tracks</th>
-                  <th>score</th>
-                </tr>
-              </thead>
-              <tbody>
-                {artistsList.map((artist) => (
-                  <tr key={artist.id}>
-                    <td><a href={`https://open.spotify.com/artist/${artist.id}`} target="_blank" rel="noopener noreferrer">{artist.name}</a></td>
-                    <td>{artist.savedTrackCount}</td>
-                    <td>{artist.score.toFixed(2)}</td>
-                    <td>{artist.relatedArtists.join(", ")}</td>
+          {activeTab === 'graph' && (
+            <div className="tab-content">
+              <Graph artistsRelationships={artistRelationships} artistsList={artistsList} />
+            </div>
+          )}
+          {activeTab === 'table' && (
+            <div className="tab-content">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Saved Tracks</th>
+                    <th>Score</th>
+                    <th>Related Artists</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </thead>
+                <tbody>
+                  {artistsList.map((artist) => (
+                    <tr key={artist.id}>
+                      <td><a href={`https://open.spotify.com/artist/${artist.id}`} target="_blank" rel="noopener noreferrer">{artist.name}</a></td>
+                      <td>{artist.savedTrackCount}</td>
+                      <td>{artist.score.toFixed(2)}</td>
+                      <td>{artist.relatedArtists.join(", ")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
-    </BrowserRouter >
+    </BrowserRouter>
   );
 }
 
