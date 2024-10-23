@@ -20,7 +20,7 @@ function Login() {
 
 const App: React.FC = () => {
 
-  const [artistsMap, setArtistsMap] = useState<Map<string, ProcessedArtist>>(new Map());
+  const [artistsList, setArtistsList] = useState<ProcessedArtist[]>([]);
   const [artistRelationships, setArtistRelationships] = useState<ArtistRelationship[]>([]);
 
   useEffect(() => {
@@ -30,20 +30,12 @@ const App: React.FC = () => {
         return;
       }
       console.log(spotifyToken);
-      const { artistsMap: artistsMapLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, clientId);
+      const { artistsList: artistsListLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, clientId);
 
-      setArtistsMap(artistsMapLocal);
+      setArtistsList(artistsListLocal);
       setArtistRelationships(artistRelationshipsLocal);
     });
   }, []);
-
-  const sortedArtistsBySavedTracks = Array.from(artistsMap.values()).sort((a, b) => {
-    const savedTracksDiff = b.savedTrackCount - a.savedTrackCount;
-    if (savedTracksDiff !== 0) {
-      return savedTracksDiff;
-    }
-    return b.score - a.score;
-  });
 
   return (
     <BrowserRouter>
@@ -64,11 +56,11 @@ const App: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {sortedArtistsBySavedTracks.map((artist) => (
+              {artistsList.map((artist) => (
                 <tr key={artist.id}>
-                  <td>{artist.name}</td>
+                    <td><a href={`https://open.spotify.com/artist/${artist.id}`} target="_blank" rel="noopener noreferrer">{artist.name}</a></td>
                   <td>{artist.savedTrackCount}</td>
-                  <td>{artist.score}</td>
+                  <td>{artist.score.toFixed(2)}</td>
                   <td>{artist.relatedArtists.join(", ")}</td>
                 </tr>
               ))}

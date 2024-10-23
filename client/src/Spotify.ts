@@ -3,7 +3,7 @@ import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
 
 const MAX_ARTISTS = 10000;
-const MAX_RELATED_ARTISTS = 5;
+const MAX_RELATED_ARTISTS = 20;
 
 export type StoredArtist = {
     id: string;
@@ -196,5 +196,15 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
         }
     }
 
-    return { artistsMap, artistRelationships: [...artistsRelationshipsMap.values()] };
+
+  const compareArtist = (a: ProcessedArtist, b: ProcessedArtist) => {
+    const savedTracksDiff = b.savedTrackCount - a.savedTrackCount;
+    if (savedTracksDiff !== 0) {
+      return savedTracksDiff;
+    }
+    return b.score - a.score;
+  };
+
+    const artistsList = [...artistsMap.values()].sort(compareArtist).slice(0, 3000);
+    return { artistsList, artistRelationships: [...artistsRelationshipsMap.values()] };
 };
