@@ -97,23 +97,30 @@ function dragended(event: any) {
 
 
 export const Graph: React.FC<{
-    artistsMap: Map<string, ProcessedArtist>,
-    artistRelationships: ArtistRelationship[],
+    artistsList: ProcessedArtist[],
+    artistsRelationships: ArtistRelationship[],
     className?: string
-}> = ({ artistsMap, artistRelationships: artistsRelationships, className }) => {
-    const nodes = Array.from(artistsMap.values()).map((artist, index) => ({ 
-        name: artist.name, 
+}> = ({ artistsList, artistsRelationships, className }) => {
+    const nodes = artistsList.map((artist, index) => ({
+        name: artist.name,
         id: artist.id, index,
         savedTrackCount: artist.savedTrackCount,
     }));
 
     const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
-    const links = artistsRelationships.map((artistRelationships) => ({
-        source: nodesMap.get(artistRelationships.artistId1),
-        target: nodesMap.get(artistRelationships.artistId2),
-        strength: artistRelationships.strength,
-    }));
+    const links = artistsRelationships.map((artistRelationships) => {
+        const source = nodesMap.get(artistRelationships.artistId1);
+        const target = nodesMap.get(artistRelationships.artistId2);
+        if (!source || !target) {
+            throw new Error(`Invalid artist relationship ${artistRelationships.artistId1} - ${artistRelationships.artistId2}`);
+        }
+        return {
+            source,
+            target,
+            strength: artistRelationships.strength,
+        }
+    });
 
     const svgRef = useRef<SVGSVGElement | null>(null);
 

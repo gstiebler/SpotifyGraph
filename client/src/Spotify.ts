@@ -2,7 +2,7 @@ import { AccessToken, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/
 import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
 
-const MAX_ARTISTS = 10000;
+const MAX_ARTISTS = 50000;
 const MAX_RELATED_ARTISTS = 20;
 
 export type StoredArtist = {
@@ -205,6 +205,6 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     return b.score - a.score;
   };
 
-    const artistsList = [...artistsMap.values()].sort(compareArtist).slice(0, 3000);
+    const artistsList = [...artistsMap.values()].sort(compareArtist).slice(0, MAX_ARTISTS);
     return { artistsList, artistRelationships: [...artistsRelationshipsMap.values()] };
 };
