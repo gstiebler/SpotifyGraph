@@ -53,7 +53,7 @@ const App: React.FC = () => {
           <button onClick={() => setActiveTab('graph')}>Graph</button>
           <button onClick={() => setActiveTab('table')}>Table</button>
         </div>
-        {activeTab === 'graph' && (artistsList.length > 0) && (
+        {activeTab === 'graph' && (
           <div className="tab-content">
             <Graph artistsRelationships={artistRelationships} artistsList={artistsList} />
           </div>

@@ -2,8 +2,8 @@ import { AccessToken, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/
 import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
 
-const MAX_ARTISTS = 50000;
-const MAX_RELATED_ARTISTS = 20;
+const MAX_ARTISTS = 3000;
+const MAX_RELATED_ARTISTS = 5;
 
 export type StoredArtist = {
     id: string;
@@ -113,7 +113,7 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
         const mapResult = await getArtistsMapFromTracks(token, clientId);
         return [...mapResult.entries()];
     });
-    const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
+    const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs);
 
     const artistsIds = [...artistsMapFromTracks.keys()];
     const relatedArtistsListOriginal = await getRelatedArtists(artistsIds, api, db);
@@ -121,10 +121,6 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     const relatedArtistsList = relatedArtistsListOriginal.filter(({ artistId }) => artistsMapFromTracks.has(artistId));
 
     const artistsMap = new Map<string, ProcessedArtist>();
-    // The value of the set is a string in the form of "artistId1-artistId2"
-    const artistsRelationshipsMap = new Map<string, ArtistRelationship>();
-    // artistId1 => artistId2, and artistId2 => artistId1
-    const artistsGraph = new Map<string, Set<string>>();
 
     for (const artist of artistsMapFromTracks.values()) {
         artistsMap.set(artist.id, {
@@ -133,6 +129,11 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
             relatedArtists: [],
         });
     }
+    
+    // The value of the set is a string in the form of "artistId1-artistId2"
+    const artistsRelationshipsMap = new Map<string, ArtistRelationship>();
+    // artistId1 => artistId2, and artistId2 => artistId1
+    const artistsGraph = new Map<string, Set<string>>();
 
     const calculateScore = (artist: ProcessedArtist) => {
         return 1 + Math.log(artist.savedTrackCount);
@@ -144,7 +145,6 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     }
 
     for (const { artistId, relatedArtists } of relatedArtistsList) {
-        console.log(`Processing related artists for ${artistId}`);
         const artist = artistsMap.get(artistId)!;
         for (const relatedArtist of relatedArtists.slice(0, MAX_RELATED_ARTISTS)) {
             if (!artistsMap.has(relatedArtist.id)) {
@@ -205,6 +205,6 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     return b.score - a.score;
   };
 
-    const artistsList = [...artistsMap.values()].sort(compareArtist).slice(0, MAX_ARTISTS);
+    const artistsList = [...artistsMap.values()].sort(compareArtist);
     return { artistsList, artistRelationships: [...artistsRelationshipsMap.values()] };
 };
