@@ -5,6 +5,7 @@ import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
 const forceCenterStrength = 0.1;
 const forceManyBodyStrength = -2000;
+const radiusFactor = 5;
 
 type svgType = d3.Selection<SVGSVGElement, unknown, null, undefined>;
 type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, unknown>;
@@ -82,7 +83,7 @@ function updateNodes(svg: svgType, nodes: any) {
         .data(nodes)
         .join('circle')
         .attr('r', function (d: any) {
-            return (d.savedTrackCount + 5) * 20;
+            return (d.savedTrackCount + 5) * radiusFactor;
         })
         .attr('cx', function (d: any) {
             return d.x;
@@ -90,7 +91,7 @@ function updateNodes(svg: svgType, nodes: any) {
         .attr('cy', function (d: any) {
             return d.y;
         })
-        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'yellow');
+        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'hsla(50, 100%, 30%, 1)');
 }
 
 export const Graph: React.FC<{
