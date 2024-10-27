@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import * as d3 from 'd3';
 import { ArtistRelationship, ProcessedArtist } from './Spotify';
+
 
 const forceCenterStrength = 0.1;
 const forceManyBodyStrength = -2000;
@@ -10,9 +11,28 @@ type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, un
 
 let simulation: any;
 
-function executeD3(svg: svgType, nodes: any, links: any) {
-    const width = parseInt(svg.style('width'));
-    const height = parseInt(svg.style('height'));
+function executeD3(nodes: any, links: any) {
+    // in the .viz container add an svg element following the margin convention
+    const margin = {
+        top: 20,
+        right: 20,
+        bottom: 20,
+        left: 20,
+    };
+    const width = 1500 - (margin.left + margin.right);
+    const height = 600 - (margin.top + margin.bottom);
+
+    const svg = d3
+        .select('.viz')
+        .append('svg')
+        .attr('viewBox', `0 0 ${width + (margin.left + margin.right)} ${height + (margin.top + margin.bottom)}`)
+        .attr('width', width)
+        .attr('height', height);
+
+    // include the visualization in the nested group
+    const group = svg
+        .append('g')
+        .attr('transform', `translate(${margin.left} ${margin.right})`);
 
     simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
@@ -22,29 +42,38 @@ function executeD3(svg: svgType, nodes: any, links: any) {
             .strength((d: any) => {
                 return d.strength * 0.1;
             }))
-        .on('tick', () => ticked(svg, nodes, links))
+        .on('tick', () => ticked(group, nodes, links))
         .force("x", d3.forceX(10))
         .force("y", d3.forceY(-10));
+
+    const zoom = d3.zoom()
+        .scaleExtent([0.01, 40])
+        .translateExtent([[-1000, -1000], [width + 90, height + 100]])
+        .filter(filter)
+        .on("zoom", zoomed);
+
+    group.attr("class", "view")
+        .attr("x", 0.5)
+        .attr("y", 0.5)
+        .attr("width", width - 1)
+        .attr("height", height - 1);
+    function zoomed({ transform }: any) {
+        group.attr("transform", transform);
+        console.log(transform);
+    }
+
+    svg.call(zoom as any);
+
+    function filter(event: any) {
+        event.preventDefault();
+        return (!event.ctrlKey || event.type === 'wheel') && !event.button;
+    }
+
 }
 
-function updateLinks(svg: svgType, links: any) {
-    const u = svg
-        .selectAll('line')
-        .data(links)
-        .join('line')
-        .style('stroke', 'black')
-        .attr('x1', function (d: any) {
-            return d.source.x;
-        })
-        .attr('y1', function (d: any) {
-            return d.source.y;
-        })
-        .attr('x2', function (d: any) {
-            return d.target.x;
-        })
-        .attr('y2', function (d: any) {
-            return d.target.y;
-        });
+function ticked(svg: any, nodes: any, links: any) {
+    // updateLinks(svg, links);
+    updateNodes(svg, nodes);
 }
 
 function updateNodes(svg: svgType, nodes: any) {
@@ -53,7 +82,7 @@ function updateNodes(svg: svgType, nodes: any) {
         .data(nodes)
         .join('circle')
         .attr('r', function (d: any) {
-            return d.savedTrackCount + 5;
+            return (d.savedTrackCount + 5) * 20;
         })
         .attr('cx', function (d: any) {
             return d.x;
@@ -62,37 +91,6 @@ function updateNodes(svg: svgType, nodes: any) {
             return d.y;
         })
         .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'yellow');
-
-    (node as d3SelectionType).call(d3.drag<SVGCircleElement, unknown>()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended));
-}
-
-function ticked(svg: svgType, nodes: any, links: any) {
-    updateLinks(svg, links);
-    updateNodes(svg, nodes);
-}
-
-// Reheat the simulation when drag starts, and fix the subject position.
-function dragstarted(event: any) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    event.subject.fx = event.subject.x;
-    event.subject.fy = event.subject.y;
-}
-
-// Update the subject (dragged node) position during drag.
-function dragged(event: any) {
-    event.subject.fx = event.x;
-    event.subject.fy = event.y;
-}
-
-// Restore the target alpha so the simulation cools after dragging ends.
-// Unfix the subject position now that it’s no longer being dragged.
-function dragended(event: any) {
-    if (!event.active) simulation.alphaTarget(0);
-    event.subject.fx = null;
-    event.subject.fy = null;
 }
 
 export const Graph: React.FC<{
@@ -105,6 +103,8 @@ export const Graph: React.FC<{
         id: artist.id, index,
         savedTrackCount: artist.savedTrackCount,
     }));
+
+    const [hasAddedComponents, setHasAddedComponents] = React.useState(false);
 
     const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
@@ -121,17 +121,15 @@ export const Graph: React.FC<{
         }
     });
 
-    const svgRef = useRef<SVGSVGElement | null>(null);
-
     useEffect(() => {
-        if (svgRef.current) {
-            const svg = d3.select(svgRef.current);
-            svg.attr('width', '100%').attr('height', '100%');
-            executeD3(svg, nodes, links);
+        if (nodes.length === 0 || links.length === 0 || hasAddedComponents) {
+            return;
         }
-    }, [links, nodes]);
+        executeD3(nodes, links);
+        setHasAddedComponents(true);
+    }, [nodes, links, hasAddedComponents]);
 
     return (
-        <svg ref={svgRef} className={className}></svg>
+        <div className="viz"></div>
     );
 };
