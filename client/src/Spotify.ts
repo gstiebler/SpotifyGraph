@@ -2,8 +2,8 @@ import { AccessToken, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/
 import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
 
-const MAX_ARTISTS = 3000;
-const MAX_RELATED_ARTISTS = 5;
+const MAX_ARTISTS = 10000;
+const MAX_RELATED_ARTISTS = 20;
 
 export type StoredArtist = {
     id: string;
@@ -113,7 +113,7 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
         const mapResult = await getArtistsMapFromTracks(token, clientId);
         return [...mapResult.entries()];
     });
-    const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs);
+    const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
 
     const artistsIds = [...artistsMapFromTracks.keys()];
     const relatedArtistsListOriginal = await getRelatedArtists(artistsIds, api, db);
