@@ -3,9 +3,10 @@ import * as d3 from 'd3';
 import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
 
-const forceCenterStrength = 0.1;
-const forceManyBodyStrength = -2000;
+const forceCenterStrength = 0.03;
+const forceManyBodyStrength = -5000;
 const radiusFactor = 20;
+const linkStrengthFactor = 0.5;
 
 type svgType = d3.Selection<SVGSVGElement, unknown, null, undefined>;
 type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, unknown>;
@@ -45,11 +46,11 @@ function executeD3(nodes: any, links: any) {
     const simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
         .force('center', d3.forceCenter(width / 2, height / 2).strength(forceCenterStrength))
-        .force("collide", d3.forceCollide().strength(1).radius( (d: any) => d.radius  ).iterations(1))
+        .force("collide", d3.forceCollide().radius( (d: any) => d.radius  ).iterations(1))
         .force('link', d3.forceLink(links)
             .id((d: any) => d.id)
             .strength((d: any) => {
-                return d.strength * 0.1;
+                return d.strength * linkStrengthFactor;
             }))
         .on('tick', () => ticked(group, nodes, tooltip))
         .force("x", d3.forceX(10))
@@ -103,7 +104,7 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
 
 
     function tooltip_in(event: any, d: any) { // pass event and d to this function so that it can access d for our data
-        console.log(`tooltip in ${d.name}`);
+        console.log(`Artist: ${d.name}`);
         return tooltip
             .html("<h4>" + d.name + "</h4>") // add an html element with a header tag containing the name of the node.  This line is where you would add additional information like: "<h4>" + d.name + "</h4></br><p>" + d.type + "</p>"  Note the quote marks, pluses and </br>--these are necessary for javascript to put all the data and strings within quotes together properly.  Any text needs to be all one line in .html() here
             .style("visibility", "visible") // make the tooltip visible on hover
@@ -112,7 +113,6 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
     }
 
     function tooltip_out() {
-        console.log("tooltip out");
         return tooltip
             .transition()
             .duration(50) // give the hide behavior a 50 milisecond delay so that it doesn't jump around as the network moves
