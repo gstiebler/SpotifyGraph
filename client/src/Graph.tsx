@@ -46,7 +46,7 @@ function executeD3(nodes: any, links: any) {
     const simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
         .force('center', d3.forceCenter(width / 2, height / 2).strength(forceCenterStrength))
-        .force("collide", d3.forceCollide().radius( (d: any) => d.radius  ).iterations(1))
+        .force("collide", d3.forceCollide().radius((d: any) => d.radius).iterations(1))
         .force('link', d3.forceLink(links)
             .id((d: any) => d.id)
             .strength((d: any) => {
@@ -58,7 +58,6 @@ function executeD3(nodes: any, links: any) {
 
     const zoom = d3.zoom()
         .scaleExtent([0.01, 40])
-        // .translateExtent([[-1000, -1000], [width + 1090, height + 1000]])
         .filter(filter)
         .on("zoom", zoomed);
 
@@ -84,6 +83,35 @@ function ticked(svg: any, nodes: any, tooltip: tooltipType) {
     updateNodes(svg, nodes, tooltip);
 }
 
+function stringToRandomNumber(str: string) {
+    // Generate a simple hash from the string
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0; // Convert to a 32-bit integer
+    }
+
+    // Use the hash to generate a pseudo-random number between 0 and 1
+    return (hash >>> 0) / 4294967295;
+}
+
+function stringToRandomInRange(str: string, min: number, max: number) {
+    const randomFraction = stringToRandomNumber(str);
+    return min + randomFraction * (max - min);
+}
+
+function getSavedArtistColor(d: any) {
+    const blueHue = 240;
+    const randomComponent = stringToRandomInRange(d.name, -25, 25);
+    return `hsla(${blueHue + randomComponent}, 100%, 60%, 1)`;
+}
+
+function getSuggestedArtistColor(d: any) {
+    const yellowHue = 60;
+    const randomComponent = stringToRandomInRange(d.name, -15, 15);
+    return `hsla(${yellowHue + randomComponent}, 100%, 30%, 1)`;
+}
+
 function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
     const node = svg
         .selectAll('circle')
@@ -98,7 +126,7 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
         .attr('cy', function (d: any) {
             return d.y;
         })
-        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'hsla(50, 100%, 30%, 1)')
+        .style('fill', (d: any) => d.savedTrackCount > 0 ? getSavedArtistColor(d) : getSuggestedArtistColor(d))
         .on("mouseover", tooltip_in) // when the mouse hovers a node, call the tooltip_in function to create the tooltip
         .on("mouseout", tooltip_out) // when the mouse stops hovering a node, call the tooltip_out function to get rid of the tooltip;
 
