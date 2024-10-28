@@ -45,6 +45,7 @@ function executeD3(nodes: any, links: any) {
     const simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
         .force('center', d3.forceCenter(width / 2, height / 2).strength(forceCenterStrength))
+        .force("collide", d3.forceCollide().strength(1).radius( (d: any) => d.radius  ).iterations(1))
         .force('link', d3.forceLink(links)
             .id((d: any) => d.id)
             .strength((d: any) => {
@@ -88,7 +89,7 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
         .data(nodes)
         .join('circle')
         .attr('r', function (d: any) {
-            return (d.savedTrackCount + 5) * radiusFactor;
+            return d.radius;
         })
         .attr('cx', function (d: any) {
             return d.x;
@@ -128,6 +129,7 @@ export const Graph: React.FC<{
         name: artist.name,
         id: artist.id, index,
         savedTrackCount: artist.savedTrackCount,
+        radius: (artist.savedTrackCount + 5) * radiusFactor,
     }));
 
     const [hasAddedComponents, setHasAddedComponents] = React.useState(false);
