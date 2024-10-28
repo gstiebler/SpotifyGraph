@@ -148,6 +148,12 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
     }
 }
 
+const getRadius = (artist: ProcessedArtist) => {
+    return artist.savedTrackCount > 0 ?
+        (artist.savedTrackCount + 5) * radiusFactor :
+        artist.score * radiusFactor;
+}
+
 export const Graph: React.FC<{
     artistsList: ProcessedArtist[],
     artistsRelationships: ArtistRelationship[],
@@ -157,7 +163,7 @@ export const Graph: React.FC<{
         name: artist.name,
         id: artist.id, index,
         savedTrackCount: artist.savedTrackCount,
-        radius: (artist.savedTrackCount + 5) * radiusFactor,
+        radius: getRadius(artist),
     }));
 
     const [hasAddedComponents, setHasAddedComponents] = React.useState(false);
