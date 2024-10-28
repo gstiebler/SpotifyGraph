@@ -5,12 +5,12 @@ import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
 const forceCenterStrength = 0.1;
 const forceManyBodyStrength = -2000;
-const radiusFactor = 5;
+const radiusFactor = 20;
 
 type svgType = d3.Selection<SVGSVGElement, unknown, null, undefined>;
 type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, unknown>;
+type tooltipType = d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
 
-let simulation: any;
 
 function executeD3(nodes: any, links: any) {
     // in the .viz container add an svg element following the margin convention
@@ -35,7 +35,14 @@ function executeD3(nodes: any, links: any) {
         .append('g')
         .attr('transform', `translate(${margin.left} ${margin.right})`);
 
-    simulation = d3.forceSimulation(nodes)
+    const tooltip = d3.select("#artist_name") // select the tooltip div for manipulation
+        .append("div") // the tooltip always "exists" as its own html div, even when not visible
+        .style("position", "absolute") // the absolute position is necessary so that we can manually define its position later
+        .style("visibility", "hidden") // hide it from default at the start so it only appears on hover
+        .style("background-color", "white")
+        .attr("class", "tooltip");
+
+    const simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
         .force('center', d3.forceCenter(width / 2, height / 2).strength(forceCenterStrength))
         .force('link', d3.forceLink(links)
@@ -43,13 +50,13 @@ function executeD3(nodes: any, links: any) {
             .strength((d: any) => {
                 return d.strength * 0.1;
             }))
-        .on('tick', () => ticked(group, nodes, links))
+        .on('tick', () => ticked(group, nodes, tooltip))
         .force("x", d3.forceX(10))
         .force("y", d3.forceY(-10));
 
     const zoom = d3.zoom()
         .scaleExtent([0.01, 40])
-        .translateExtent([[-1000, -1000], [width + 90, height + 100]])
+        // .translateExtent([[-1000, -1000], [width + 1090, height + 1000]])
         .filter(filter)
         .on("zoom", zoomed);
 
@@ -60,7 +67,6 @@ function executeD3(nodes: any, links: any) {
         .attr("height", height - 1);
     function zoomed({ transform }: any) {
         group.attr("transform", transform);
-        console.log(transform);
     }
 
     svg.call(zoom as any);
@@ -72,12 +78,11 @@ function executeD3(nodes: any, links: any) {
 
 }
 
-function ticked(svg: any, nodes: any, links: any) {
-    // updateLinks(svg, links);
-    updateNodes(svg, nodes);
+function ticked(svg: any, nodes: any, tooltip: tooltipType) {
+    updateNodes(svg, nodes, tooltip);
 }
 
-function updateNodes(svg: svgType, nodes: any) {
+function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
     const node = svg
         .selectAll('circle')
         .data(nodes)
@@ -91,7 +96,27 @@ function updateNodes(svg: svgType, nodes: any) {
         .attr('cy', function (d: any) {
             return d.y;
         })
-        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'hsla(50, 100%, 30%, 1)');
+        .style('fill', (d: any) => d.savedTrackCount > 0 ? 'blue' : 'hsla(50, 100%, 30%, 1)')
+        .on("mouseover", tooltip_in) // when the mouse hovers a node, call the tooltip_in function to create the tooltip
+        .on("mouseout", tooltip_out) // when the mouse stops hovering a node, call the tooltip_out function to get rid of the tooltip;
+
+
+    function tooltip_in(event: any, d: any) { // pass event and d to this function so that it can access d for our data
+        console.log(`tooltip in ${d.name}`);
+        return tooltip
+            .html("<h4>" + d.name + "</h4>") // add an html element with a header tag containing the name of the node.  This line is where you would add additional information like: "<h4>" + d.name + "</h4></br><p>" + d.type + "</p>"  Note the quote marks, pluses and </br>--these are necessary for javascript to put all the data and strings within quotes together properly.  Any text needs to be all one line in .html() here
+            .style("visibility", "visible") // make the tooltip visible on hover
+        // .style("top", event.pageY + "px") // position the tooltip with its top at the same pixel location as the mouse on the screen
+        // .style("left", event.pageX + "px"); // position the tooltip just to the right of the mouse location
+    }
+
+    function tooltip_out() {
+        console.log("tooltip out");
+        return tooltip
+            .transition()
+            .duration(50) // give the hide behavior a 50 milisecond delay so that it doesn't jump around as the network moves
+            .style("visibility", "hidden"); // hide the tooltip when the mouse stops hovering
+    }
 }
 
 export const Graph: React.FC<{
@@ -131,6 +156,9 @@ export const Graph: React.FC<{
     }, [nodes, links, hasAddedComponents]);
 
     return (
-        <div className="viz"></div>
+        <div>
+            <div id="artist_name" />
+            <div className="viz" />
+        </div>
     );
 };
