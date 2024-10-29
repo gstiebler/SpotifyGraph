@@ -25,23 +25,21 @@ function executeD3(nodes: any, links: any) {
     const height = 600 - (margin.top + margin.bottom);
 
     const svg = d3
-        .select('.viz')
-        .append('svg')
+        .select('#svg_class')
         .attr('viewBox', `0 0 ${width + (margin.left + margin.right)} ${height + (margin.top + margin.bottom)}`)
         .attr('width', width)
         .attr('height', height);
 
     // include the visualization in the nested group
     const group = svg
-        .append('g')
+        .select('#svg_g')
         .attr('transform', `translate(${margin.left} ${margin.right})`);
 
     const tooltip = d3.select("#artist_name") // select the tooltip div for manipulation
-        .append("div") // the tooltip always "exists" as its own html div, even when not visible
         .style("position", "absolute") // the absolute position is necessary so that we can manually define its position later
         .style("visibility", "hidden") // hide it from default at the start so it only appears on hover
         .style("background-color", "white")
-        .attr("class", "tooltip");
+        .attr("class", "tooltip") as any;
 
     const simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
@@ -136,8 +134,8 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
         return tooltip
             .html("<h4>" + d.name + "</h4>") // add an html element with a header tag containing the name of the node.  This line is where you would add additional information like: "<h4>" + d.name + "</h4></br><p>" + d.type + "</p>"  Note the quote marks, pluses and </br>--these are necessary for javascript to put all the data and strings within quotes together properly.  Any text needs to be all one line in .html() here
             .style("visibility", "visible") // make the tooltip visible on hover
-        // .style("top", event.pageY + "px") // position the tooltip with its top at the same pixel location as the mouse on the screen
-        // .style("left", event.pageX + "px"); // position the tooltip just to the right of the mouse location
+            .style("top", event.pageY + "px") // position the tooltip with its top at the same pixel location as the mouse on the screen
+            .style("left", event.pageX + "px"); // position the tooltip just to the right of the mouse location
     }
 
     function tooltip_out() {
@@ -194,7 +192,11 @@ export const Graph: React.FC<{
     return (
         <div>
             <div id="artist_name" />
-            <div className="viz" />
+            <div className="viz" > 
+                <svg id="svg_class">
+                    <g id="svg_g" />
+                </svg>
+            </div>
         </div>
     );
 };

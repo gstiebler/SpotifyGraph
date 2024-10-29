@@ -4,6 +4,7 @@ import Dexie, { EntityTable } from 'dexie';
 
 const MAX_ARTISTS = 20000;
 const MAX_RELATED_ARTISTS = 20;
+const SCORE_THRESHOULD = 5;
 
 export type StoredArtist = {
     id: string;
@@ -210,7 +211,7 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
 };
 
 function filterArtistsAndRelationships(artistsList: ProcessedArtist[], artistRelationships: ArtistRelationship[]) {
-    const filteredArtistsList = artistsList.filter((artist) => artist.score > 1.7);
+    const filteredArtistsList = artistsList.filter((artist) => artist.score > SCORE_THRESHOULD);
     const artistsMap = new Map(filteredArtistsList.map((artist) => [artist.id, artist]));
     const filteredArtistsRelationships = artistRelationships.filter(
         (relationship) => artistsMap.has(relationship.artistId1) && artistsMap.has(relationship.artistId2));
