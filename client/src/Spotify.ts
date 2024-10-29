@@ -2,7 +2,7 @@ import { AccessToken, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/
 import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
 
-const MAX_ARTISTS = 10000;
+const MAX_ARTISTS = 20000;
 const MAX_RELATED_ARTISTS = 20;
 
 export type StoredArtist = {
@@ -129,7 +129,7 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
             relatedArtists: [],
         });
     }
-    
+
     // The value of the set is a string in the form of "artistId1-artistId2"
     const artistsRelationshipsMap = new Map<string, ArtistRelationship>();
     // artistId1 => artistId2, and artistId2 => artistId1
@@ -197,14 +197,22 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     }
 
 
-  const compareArtist = (a: ProcessedArtist, b: ProcessedArtist) => {
-    const savedTracksDiff = b.savedTrackCount - a.savedTrackCount;
-    if (savedTracksDiff !== 0) {
-      return savedTracksDiff;
-    }
-    return b.score - a.score;
-  };
+    const compareArtist = (a: ProcessedArtist, b: ProcessedArtist) => {
+        const savedTracksDiff = b.savedTrackCount - a.savedTrackCount;
+        if (savedTracksDiff !== 0) {
+            return savedTracksDiff;
+        }
+        return b.score - a.score;
+    };
 
     const artistsList = [...artistsMap.values()].sort(compareArtist);
-    return { artistsList, artistRelationships: [...artistsRelationshipsMap.values()] };
+    return filterArtistsAndRelationships(artistsList, [...artistsRelationshipsMap.values()]);
 };
+
+function filterArtistsAndRelationships(artistsList: ProcessedArtist[], artistRelationships: ArtistRelationship[]) {
+    const filteredArtistsList = artistsList.filter((artist) => artist.score > 1.7);
+    const artistsMap = new Map(filteredArtistsList.map((artist) => [artist.id, artist]));
+    const filteredArtistsRelationships = artistRelationships.filter(
+        (relationship) => artistsMap.has(relationship.artistId1) && artistsMap.has(relationship.artistId2));
+    return { artistsList: filteredArtistsList, artistRelationships: filteredArtistsRelationships };
+}
