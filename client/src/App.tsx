@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Link, useLocation } from 'react-router-dom';
 import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
@@ -14,7 +14,6 @@ const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = `${window.location.origin}/callback`;
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('graph');
   const [artistsList, setArtistsList] = useState<ProcessedArtist[]>([]);
   const [artistRelationships, setArtistRelationships] = useState<ArtistRelationship[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -28,7 +27,6 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-
     SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (spotifyToken: AccessToken) => {
       if (!spotifyToken) {
         return;
@@ -50,8 +48,7 @@ const App: React.FC = () => {
           </IconButton>
           <Typography variant="h6">Artist Data</Typography>
           <div className="tabs">
-            <button className={activeTab === 'graph' ? 'active' : ''} onClick={() => setActiveTab('graph')}>Graph</button>
-            <button className={activeTab === 'table' ? 'active' : ''} onClick={() => setActiveTab('table')}>Table</button>
+            <TabLinks />
           </div>
         </header>
         <Drawer
@@ -71,24 +68,34 @@ const App: React.FC = () => {
           </Box>
         </Drawer>
         <div className="App-content">
-          {activeTab === 'graph' && (
-            <div className="tab-content">
-              <Graph
-                artistsRelationships={artistRelationships}
-                artistsList={artistsList}
-                forceCenterStrength={forceCenterStrength}
-                forceManyBodyStrength={forceManyBodyStrength}
-                linkStrengthFactor={linkStrengthFactor}
-                className="Graph"
-              />
-            </div>
-          )}
-          {activeTab === 'table' && (
-            <TableView artistsList={artistsList} />
-          )}
+          <Routes>
+            <Route path="/graph" element={
+              <div className="tab-content">
+                <Graph
+                  artistsRelationships={artistRelationships}
+                  artistsList={artistsList}
+                  forceCenterStrength={forceCenterStrength}
+                  forceManyBodyStrength={forceManyBodyStrength}
+                  linkStrengthFactor={linkStrengthFactor}
+                  className="Graph"
+                />
+              </div>
+            } />
+            <Route path="/table" element={<TableView artistsList={artistsList} />} />
+          </Routes>
         </div>
       </div>
     </BrowserRouter>
+  );
+};
+
+const TabLinks: React.FC = () => {
+  const location = useLocation();
+  return (
+    <>
+      <Link to="/graph" className={location.pathname === '/graph' ? 'active' : ''}>Graph</Link>
+      <Link to="/table" className={location.pathname === '/table' ? 'active' : ''}>Table</Link>
+    </>
   );
 };
 
