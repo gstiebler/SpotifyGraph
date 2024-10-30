@@ -2,18 +2,20 @@ import React, { useEffect } from 'react';
 import * as d3 from 'd3';
 import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
-
-const forceCenterStrength = 0.03;
-const forceManyBodyStrength = -5000;
 const radiusFactor = 20;
-const linkStrengthFactor = 0.5;
 
 type svgType = d3.Selection<SVGSVGElement, unknown, null, undefined>;
 type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, unknown>;
 type tooltipType = d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
 
 
-function executeD3(nodes: any, links: any) {
+function executeD3(
+    nodes: any, 
+    links: any, 
+    forceCenterStrength: number, 
+    forceManyBodyStrength: number, 
+    linkStrengthFactor: number
+) {
     // in the .viz container add an svg element following the margin convention
     const margin = {
         top: 20,
@@ -155,11 +157,23 @@ const getRadius = (artist: ProcessedArtist) => {
         artist.score * radiusFactor;
 }
 
-export const Graph: React.FC<{
-    artistsList: ProcessedArtist[],
-    artistsRelationships: ArtistRelationship[],
-    className?: string
-}> = ({ artistsList, artistsRelationships, className }) => {
+interface GraphProps {
+    artistsList: ProcessedArtist[];
+    artistsRelationships: ArtistRelationship[];
+    forceCenterStrength: number;
+    forceManyBodyStrength: number;
+    linkStrengthFactor: number;
+    className?: string;
+}
+
+export const Graph: React.FC<GraphProps> = ({
+    artistsList,
+    artistsRelationships,
+    forceCenterStrength,
+    forceManyBodyStrength,
+    linkStrengthFactor,
+    className,
+}) => {
     const nodes = artistsList.map((artist, index) => ({
         name: artist.name,
         id: artist.id, index,
@@ -183,8 +197,8 @@ export const Graph: React.FC<{
     });
 
     useEffect(() => {
-        executeD3(nodes, links);
-    }, [nodes, links]);
+        executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor);
+    }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor]);
 
     return (
         <div>
