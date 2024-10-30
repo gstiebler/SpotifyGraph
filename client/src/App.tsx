@@ -7,7 +7,7 @@ import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
 import { Graph } from './Graph';
-import { ArtistRelationship, getArtists, ProcessedArtist } from './Spotify';
+import { ArtistRelationship, getArtists, ProcessedArtist, LoadingProgress } from './Spotify';
 import TableView from './TableView';
 import Home from './Home';
 
@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [forceCenterStrength, setForceCenterStrength] = useState(0.03);
   const [forceManyBodyStrength, setForceManyBodyStrength] = useState(-10000);
   const [linkStrengthFactor, setLinkStrengthFactor] = useState(0.05);
+  const [loadingProgress, setLoadingProgress] = useState<LoadingProgress | null>(null);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -33,14 +34,40 @@ const App: React.FC = () => {
         return;
       }
       console.log(spotifyToken);
-      const { artistsList: artistsListLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, clientId);
+      const { artistsList: artistsListLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, clientId, setLoadingProgress);
 
       setArtistsList(artistsListLocal);
       setArtistRelationships(artistRelationshipsLocal);
+      setLoadingProgress(null);
     }).then((a) => {
       console.log("Authorization complete", a);
     });
   }, []);
+
+  const renderProgress = () => {
+    if (!loadingProgress) return null;
+    const { phase, current, total } = loadingProgress;
+    const percentage = Math.round((current / total) * 100);
+    return (
+      <Box sx={{ 
+        position: 'fixed', 
+        top: '50%', 
+        left: '50%', 
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: '20px',
+        borderRadius: '8px',
+        color: 'white'
+      }}>
+        <Typography variant="h6">
+          Loading {phase === 'tracks' ? 'Saved Tracks' : 'Related Artists'}
+        </Typography>
+        <Typography>
+          {current} / {total} ({percentage}%)
+        </Typography>
+      </Box>
+    );
+  };
 
   const isLoggedIn = false;
 
@@ -55,6 +82,7 @@ const App: React.FC = () => {
           <TabLinks />
         </div>
       </header>
+      {loadingProgress && renderProgress()}
       <Drawer
         anchor="left"
         open={drawerOpen}

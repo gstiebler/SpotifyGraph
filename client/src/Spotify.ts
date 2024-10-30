@@ -23,6 +23,12 @@ export type ArtistRelationship = {
     strength: number;
 };
 
+export type LoadingProgress = {
+    phase: 'tracks' | 'artists';
+    current: number;
+    total: number;
+}
+
 const simplifiedArtistToSGArtist = (artist: SimplifiedArtist): StoredArtist => {
     return {
         id: artist.id,
@@ -43,14 +49,26 @@ type SpotifyGraphDB = Dexie & {
     >;
 };
 
-const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Promise<Map<string, StoredArtist>> => {
+const getArtistsMapFromTracks = async (
+    token: AccessToken, 
+    clientId: string,
+    onProgress?: (progress: LoadingProgress) => void
+): Promise<Map<string, StoredArtist>> => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
     const tracks = [] as SavedTrack[];
+    
+    // Get total tracks first
+    const initial = await api.currentUser.tracks.savedTracks(1, 0);
+    const totalTracks = initial.total;
 
     while (true) {
         const response = await api.currentUser.tracks.savedTracks(50, tracks.length);
         tracks.push(...response.items);
-        console.log(`Fetched ${tracks.length} tracks`);
+        onProgress?.({
+            phase: 'tracks',
+            current: tracks.length,
+            total: totalTracks
+        });
         if (!response.next) {
             break;
         }
@@ -72,9 +90,16 @@ const getArtistsMapFromTracks = async (token: AccessToken, clientId: string): Pr
     return artistsMap;
 }
 
-const getRelatedArtists = async (artistsIds: string[], api: SpotifyApi, db: SpotifyGraphDB) => {
+const getRelatedArtists = async (
+    artistsIds: string[], 
+    api: SpotifyApi, 
+    db: SpotifyGraphDB,
+    onProgress?: (progress: LoadingProgress) => void
+) => {
     const result = [] as { artistId: string, relatedArtists: SimplifiedArtist[] }[];
-    for (const id of artistsIds) {
+    const total = artistsIds.length;
+    
+    for (const [index, id] of artistsIds.entries()) {
         console.log(`Fetching related artists for ${id}`);
         // Check if we have the data in the cache
         const cachedData = await db.spotifyGraph.get(id);
@@ -95,11 +120,21 @@ const getRelatedArtists = async (artistsIds: string[], api: SpotifyApi, db: Spot
             id,
             relatedArtists: artists
         });
+        
+        onProgress?.({
+            phase: 'artists',
+            current: index + 1,
+            total
+        });
     }
     return result;
 }
 
-export const getArtists = async (token: AccessToken, clientId: string) => {
+export const getArtists = async (
+    token: AccessToken, 
+    clientId: string,
+    onProgress?: (progress: LoadingProgress) => void
+) => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
 
     const db = new Dexie('spotifyGraph') as SpotifyGraphDB;
@@ -111,13 +146,13 @@ export const getArtists = async (token: AccessToken, clientId: string) => {
     });
 
     const artistsMapFromTracksPairs = await getFromCacheOrCalculate('artistsMap', async () => {
-        const mapResult = await getArtistsMapFromTracks(token, clientId);
+        const mapResult = await getArtistsMapFromTracks(token, clientId, onProgress);
         return [...mapResult.entries()];
     });
     const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));
 
     const artistsIds = [...artistsMapFromTracks.keys()];
-    const relatedArtistsListOriginal = await getRelatedArtists(artistsIds, api, db);
+    const relatedArtistsListOriginal = await getRelatedArtists(artistsIds, api, db, onProgress);
 
     const relatedArtistsList = relatedArtistsListOriginal.filter(({ artistId }) => artistsMapFromTracks.has(artistId));
 
