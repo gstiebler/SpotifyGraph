@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { Route, Routes, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Route, Routes, Link, useLocation, Navigate } from 'react-router-dom';
 import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
 import { Graph } from './Graph';
 import { ArtistRelationship, getArtists, ProcessedArtist } from './Spotify';
 import TableView from './TableView';
+import Home from './Home';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = `${window.location.origin}/callback`;
@@ -26,8 +27,6 @@ const App: React.FC = () => {
     setDrawerOpen(!drawerOpen);
   };
 
-  const navigate = useNavigate();
-
   useEffect(() => {
     SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (spotifyToken: AccessToken) => {
       if (!spotifyToken) {
@@ -38,8 +37,12 @@ const App: React.FC = () => {
 
       setArtistsList(artistsListLocal);
       setArtistRelationships(artistRelationshipsLocal);
+    }).then((a) => {
+      console.log("Authorization complete", a);
     });
   }, []);
+
+  const isLoggedIn = false;
 
   return (
     <div className="App">
@@ -70,7 +73,7 @@ const App: React.FC = () => {
       </Drawer>
       <div className="App-content">
         <Routes>
-          <Route path="/" element={<Navigate to="/graph" />} />
+          <Route path="/" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
           <Route path="/graph" element={
             <div className="tab-content">
               <Graph

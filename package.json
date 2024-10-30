@@ -1,0 +1,11 @@
+{
+  "name": "spotifygraph",
+  "version": "1.0.0",
+  "description": "This project lets you visualize your Spotify listening history as a graph of interconnected artists. Discover new music and explore the relationships between your favorite musicians!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
