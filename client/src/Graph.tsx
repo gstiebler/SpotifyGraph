@@ -135,12 +135,18 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
 
 
     function tooltip_in(event: any, d: any) { // pass event and d to this function so that it can access d for our data
-        console.log(`Artist: ${d.name}`);
+        const backgroundColor = d.savedTrackCount > 0 ? '#D2F9E0' : '#F1E6FE';
+        
         return tooltip
-            .html("<h4>" + d.name + "</h4>") // add an html element with a header tag containing the name of the node.  This line is where you would add additional information like: "<h4>" + d.name + "</h4></br><p>" + d.type + "</p>"  Note the quote marks, pluses and </br>--these are necessary for javascript to put all the data and strings within quotes together properly.  Any text needs to be all one line in .html() here
-            .style("visibility", "visible") // make the tooltip visible on hover
-            .style("top", event.pageY + "px") // position the tooltip with its top at the same pixel location as the mouse on the screen
-            .style("left", event.pageX + "px"); // position the tooltip just to the right of the mouse location
+            .html("<h4>" + d.name + "</h4>")
+            .style("visibility", "visible")
+            .style("top", event.pageY + "px")
+            .style("left", event.pageX + "px")
+            .style("background-color", backgroundColor)
+            .style("color", "#000000")
+            .style("padding", "8px")
+            .style("border-radius", "4px")
+            .style("font-family", "Arial, sans-serif");
     }
 
     function tooltip_out() {
