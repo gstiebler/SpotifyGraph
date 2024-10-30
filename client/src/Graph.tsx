@@ -29,7 +29,8 @@ function executeD3(
 
     svg.attr('viewBox', `0 0 ${width + (margin.left + margin.right)} ${height + (margin.top + margin.bottom)}`)
         .attr('width', width)
-        .attr('height', height);
+        .attr('height', height)
+        .style('background-color', 'black'); // Add this line
 
     // include the visualization in the nested group
     const group = svg
@@ -101,17 +102,17 @@ function stringToRandomInRange(str: string, min: number, max: number) {
 }
 
 function getSavedArtistColor(d: any) {
-    const blueHue = 240;
+    const blueHue = 220;
     const colorRange = 8;
     const randomComponent = stringToRandomInRange(d.name, -colorRange, colorRange);
-    return `hsla(${blueHue + randomComponent}, 100%, 60%, 1)`;
+    return `hsla(${blueHue + randomComponent}, 100%, 70%, 0.9)`;
 }
 
 function getSuggestedArtistColor(d: any) {
     const yellowHue = 60;
     const colorRange = 5;
     const randomComponent = stringToRandomInRange(d.name, -colorRange, colorRange);
-    return `hsla(${yellowHue + randomComponent}, 100%, 30%, 1)`;
+    return `hsla(${yellowHue + randomComponent}, 100%, 50%, 0.9)`;
 }
 
 function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
