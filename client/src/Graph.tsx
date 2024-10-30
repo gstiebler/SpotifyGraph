@@ -102,17 +102,17 @@ function stringToRandomInRange(str: string, min: number, max: number) {
 }
 
 function getSavedArtistColor(d: any) {
-    const blueHue = 220;
-    const colorRange = 8;
+    const greenHue = 120;
+    const colorRange = 25;
     const randomComponent = stringToRandomInRange(d.name, -colorRange, colorRange);
-    return `hsla(${blueHue + randomComponent}, 100%, 70%, 0.9)`;
+    return `hsla(${greenHue + randomComponent}, 100%, 70%, 0.7)`;
 }
 
 function getSuggestedArtistColor(d: any) {
-    const yellowHue = 60;
+    const yellowHue = 283;
     const colorRange = 5;
     const randomComponent = stringToRandomInRange(d.name, -colorRange, colorRange);
-    return `hsla(${yellowHue + randomComponent}, 100%, 50%, 0.9)`;
+    return `hsla(${yellowHue + randomComponent}, 39%, 56%, 0.9)`;
 }
 
 function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
@@ -206,7 +206,7 @@ export const Graph: React.FC<GraphProps> = ({
     }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, width, height]);
 
     return (
-        <div id="d3-container">
+        <div id="d3-container" style={{ backgroundColor: 'black' }}>
             <div id="artist_name" />
             <div className="viz" >
                 <svg id="svg_class" />
