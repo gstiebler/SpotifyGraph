@@ -4,7 +4,7 @@ import Dexie, { EntityTable } from 'dexie';
 
 const MAX_ARTISTS = 20000;
 const MAX_RELATED_ARTISTS = 20;
-const SCORE_THRESHOULD = 5;
+const SCORE_THRESHOULD = 3;
 
 export type StoredArtist = {
     id: string;

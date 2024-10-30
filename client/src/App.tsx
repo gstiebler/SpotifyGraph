@@ -71,7 +71,7 @@ const App: React.FC = () => {
           />
         </Box>
       </Drawer>
-      <div className="App-content">
+      <div className="App-content" style={{ backgroundColor: 'black' }}>
         <Routes>
           <Route path="/" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
           <Route path="/graph" element={
