@@ -1,2 +1,7 @@
 node_modules
 .env
+public
+client/*.log
+.firebase
+.firebaserc
+firebase.json
