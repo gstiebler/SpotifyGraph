@@ -1,9 +1,8 @@
-// App.tsx
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import { Route, Routes, Link, useLocation, Navigate } from 'react-router-dom';
-import { Drawer, IconButton, Typography, Box, Paper } from '@mui/material';
+import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
 import { Graph } from './Graph';

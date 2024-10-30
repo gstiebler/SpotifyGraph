@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
@@ -19,6 +19,14 @@ function executeD3(
 ) {
     const svg = d3.select('#svg_class')
     svg.selectAll('*').remove();
+
+    // Remove fixed width/height and use 100%
+    svg.attr('width', '100%')
+       .attr('height', '100%')
+       .attr('viewBox', `0 0 ${width} ${height}`)
+       .attr('preserveAspectRatio', 'xMidYMid meet')
+       .style('background-color', 'black');
+
     // in the .viz container add an svg element following the margin convention
     const margin = {
         top: 20,
@@ -180,6 +188,28 @@ export const Graph: React.FC<GraphProps> = ({
     linkStrengthFactor,
     className,
 }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        const updateDimensions = () => {
+            if (containerRef.current) {
+                setDimensions({
+                    width: containerRef.current.clientWidth,
+                    height: containerRef.current.clientHeight
+                });
+            }
+        };
+
+        // Initial dimensions
+        updateDimensions();
+
+        // Add resize listener
+        window.addEventListener('resize', updateDimensions);
+
+        return () => window.removeEventListener('resize', updateDimensions);
+    }, []);
+
     const nodes = artistsList.map((artist, index) => ({
         name: artist.name,
         id: artist.id, index,
@@ -201,20 +231,17 @@ export const Graph: React.FC<GraphProps> = ({
             strength: artistRelationships.strength,
         }
     });
-    const svgRef = useRef<SVGSVGElement>(null);
-
-    const width = svgRef.current?.clientWidth || 1200;
-    const height = svgRef.current?.clientHeight || 800;
 
     useEffect(() => {
-        executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, width, height);
-        console.log(`Use effect: ${forceCenterStrength}, ${forceManyBodyStrength}, ${linkStrengthFactor}`);
-    }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, width, height]);
+        if (dimensions.width && dimensions.height) {
+            executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions.width, dimensions.height);
+        }
+    }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions]);
 
     return (
-        <div id="d3-container" style={{ backgroundColor: 'black' }}>
+        <div id="d3-container" ref={containerRef}>
             <div id="artist_name" />
-            <div className="viz" >
+            <div className="viz">
                 <svg id="svg_class" />
             </div>
         </div>
