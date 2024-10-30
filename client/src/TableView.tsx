@@ -1,5 +1,28 @@
 import React from 'react';
 import { ProcessedArtist } from './Spotify';
+import { styled } from '@mui/material/styles';
+
+const StyledTable = styled('table')({
+  backgroundColor: '#191414',
+  color: '#FFFFFF',
+  width: '100%',
+  borderCollapse: 'collapse',
+  '& th, & td': {
+    padding: '12px',
+    borderBottom: '1px solid #282828',
+  },
+  '& th': {
+    backgroundColor: '#282828',
+    color: '#1DB954',
+  },
+  '& a': {
+    color: '#1DB954',
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+    }
+  }
+});
 
 interface TableViewProps {
   artistsList: ProcessedArtist[];
@@ -7,8 +30,8 @@ interface TableViewProps {
 
 const TableView: React.FC<TableViewProps> = ({ artistsList }) => {
   return (
-    <div className="tab-content">
-      <table>
+    <div className="tab-content" style={{ backgroundColor: '#191414', padding: '20px' }}>
+      <StyledTable>
         <thead>
           <tr>
             <th>Name</th>
@@ -27,7 +50,7 @@ const TableView: React.FC<TableViewProps> = ({ artistsList }) => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </StyledTable>
     </div>
   );
 };

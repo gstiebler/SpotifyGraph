@@ -17,7 +17,7 @@ const LoadingProgress: React.FC<LoadingProgressProps> = ({ loadingProgress, isVi
       top: '50%', 
       left: '50%', 
       transform: 'translate(-50%, -50%)',
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      backgroundColor: 'rgba(40, 40, 40, 0.95)',
       padding: '32px',
       borderRadius: '8px',
       display: 'flex',
@@ -26,9 +26,10 @@ const LoadingProgress: React.FC<LoadingProgressProps> = ({ loadingProgress, isVi
       gap: '16px',
       opacity: isVisible ? 1 : 0,
       transition: 'opacity 0.5s ease-out',
-      pointerEvents: isVisible ? 'auto' : 'none'
+      pointerEvents: isVisible ? 'auto' : 'none',
+      color: '#FFFFFF'
     }}>
-      <Typography variant="h6" color="primary">
+      <Typography variant="h6" sx={{ color: '#1DB954' }}>
         {phase === 'tracks' ? 'Loading Saved Tracks' : 'Loading Related Artists'}
       </Typography>
       <Box sx={{ position: 'relative', display: 'inline-flex' }}>
@@ -37,7 +38,7 @@ const LoadingProgress: React.FC<LoadingProgressProps> = ({ loadingProgress, isVi
           value={percentage} 
           size={80} 
           thickness={4}
-          color="primary"
+          sx={{ color: '#1DB954' }}
         />
         <Box
           sx={{
@@ -56,7 +57,7 @@ const LoadingProgress: React.FC<LoadingProgressProps> = ({ loadingProgress, isVi
           </Typography>
         </Box>
       </Box>
-      <Typography variant="body2" color="primary">
+      <Typography variant="body2" sx={{ color: '#FFFFFF' }}>
         {current} of {total}
       </Typography>
     </Paper>

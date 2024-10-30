@@ -3,18 +3,21 @@
   display: flex;
   flex-direction: column;
   height: 100vh; /* Full viewport height */
+  background-color: #191414;
+  color: #FFFFFF;
 }
 
 .viz {
   width: 100%;
   height: 100%;
-  background-color: black;
+  background-color: #191414;
 }
 
 .tooltip {
-  fill: white;
+  fill: #FFFFFF;
   font-family: sans-serif;
   padding: 5px;
   border-radius: 5px;
-  border: 1px solid grey;
+  border: 1px solid #1DB954;
+  background-color: rgba(25, 20, 20, 0.9);
 }

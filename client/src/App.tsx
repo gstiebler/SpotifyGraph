@@ -12,15 +12,34 @@ import TableView from './TableView';
 import Home from './Home';
 import LoadingProgress from './LoadingProgress';
 import { styled } from '@mui/material/styles';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = `${window.location.origin}/callback`;
 
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1DB954',
+      dark: '#1ed760',
+      contrastText: '#FFFFFF'
+    },
+    background: {
+      default: '#191414',
+      paper: '#282828',
+    },
+    text: {
+      primary: '#FFFFFF',
+      secondary: '#B3B3B3',
+    }
+  }
+});
+
 const AppHeader = styled('header')(({ theme }) => ({
   flex: '0 1 auto',
-  backgroundColor: theme.palette.grey[900],
+  backgroundColor: '#282828',
   padding: '10px 20px',
-  color: 'white',
+  color: '#FFFFFF',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between'
@@ -98,52 +117,54 @@ const App: React.FC = () => {
   const isLoggedIn = false;
 
   return (
-    <div className="App">
-      <AppHeader>
-        <IconButton onClick={toggleDrawer} color="inherit">
-          <MenuIcon />
-        </IconButton>
-        <Typography variant="h6">Artist Data</Typography>
-        <TabContainer>
-          <TabLinks />
-        </TabContainer>
-      </AppHeader>
-      {loadingProgress && <LoadingProgress loadingProgress={loadingProgress} isVisible={isVisible} />}
-      <Drawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={toggleDrawer}
-      >
-        <Box sx={{ width: 250, padding: 2 }}>
-          <Sliders
-            forceCenterStrength={forceCenterStrength}
-            setForceCenterStrength={setForceCenterStrength}
-            forceManyBodyStrength={forceManyBodyStrength}
-            setForceManyBodyStrength={setForceManyBodyStrength}
-            linkStrengthFactor={linkStrengthFactor}
-            setLinkStrengthFactor={setLinkStrengthFactor}
-          />
-        </Box>
-      </Drawer>
-      <AppContent>
-        <Routes>
-          <Route path="/" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
-          <Route path="/graph" element={
-            <TabContent>
-              <Graph
-                artistsRelationships={artistRelationships}
-                artistsList={artistsList}
-                forceCenterStrength={forceCenterStrength}
-                forceManyBodyStrength={forceManyBodyStrength}
-                linkStrengthFactor={linkStrengthFactor}
-                className="Graph"
-              />
-            </TabContent>
-          } />
-          <Route path="/table" element={<TableView artistsList={artistsList} />} />
-        </Routes>
-      </AppContent>
-    </div>
+    <ThemeProvider theme={theme}>
+      <div className="App">
+        <AppHeader>
+          <IconButton onClick={toggleDrawer} color="inherit">
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6">Artist Data</Typography>
+          <TabContainer>
+            <TabLinks />
+          </TabContainer>
+        </AppHeader>
+        {loadingProgress && <LoadingProgress loadingProgress={loadingProgress} isVisible={isVisible} />}
+        <Drawer
+          anchor="left"
+          open={drawerOpen}
+          onClose={toggleDrawer}
+        >
+          <Box sx={{ width: 250, padding: 2 }}>
+            <Sliders
+              forceCenterStrength={forceCenterStrength}
+              setForceCenterStrength={setForceCenterStrength}
+              forceManyBodyStrength={forceManyBodyStrength}
+              setForceManyBodyStrength={setForceManyBodyStrength}
+              linkStrengthFactor={linkStrengthFactor}
+              setLinkStrengthFactor={setLinkStrengthFactor}
+            />
+          </Box>
+        </Drawer>
+        <AppContent>
+          <Routes>
+            <Route path="/" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
+            <Route path="/graph" element={
+              <TabContent>
+                <Graph
+                  artistsRelationships={artistRelationships}
+                  artistsList={artistsList}
+                  forceCenterStrength={forceCenterStrength}
+                  forceManyBodyStrength={forceManyBodyStrength}
+                  linkStrengthFactor={linkStrengthFactor}
+                  className="Graph"
+                />
+              </TabContent>
+            } />
+            <Route path="/table" element={<TableView artistsList={artistsList} />} />
+          </Routes>
+        </AppContent>
+      </div>
+    </ThemeProvider>
   );
 };
 
