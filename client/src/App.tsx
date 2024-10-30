@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { BrowserRouter, Route, Routes, Link, useLocation } from 'react-router-dom';
+import { Route, Routes, Link, useLocation } from 'react-router-dom';
 import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
@@ -40,52 +40,50 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <div className="App">
-        <header className="App-header">
-          <IconButton onClick={toggleDrawer} color="inherit">
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6">Artist Data</Typography>
-          <div className="tabs">
-            <TabLinks />
-          </div>
-        </header>
-        <Drawer
-          anchor="left"
-          open={drawerOpen}
-          onClose={toggleDrawer}
-        >
-          <Box sx={{ width: 250, padding: 2 }}>
-            <Sliders
-              forceCenterStrength={forceCenterStrength}
-              setForceCenterStrength={setForceCenterStrength}
-              forceManyBodyStrength={forceManyBodyStrength}
-              setForceManyBodyStrength={setForceManyBodyStrength}
-              linkStrengthFactor={linkStrengthFactor}
-              setLinkStrengthFactor={setLinkStrengthFactor}
-            />
-          </Box>
-        </Drawer>
-        <div className="App-content">
-          <Routes>
-            <Route path="/graph" element={
-              <div className="tab-content">
-                <Graph
-                  artistsRelationships={artistRelationships}
-                  artistsList={artistsList}
-                  forceCenterStrength={forceCenterStrength}
-                  forceManyBodyStrength={forceManyBodyStrength}
-                  linkStrengthFactor={linkStrengthFactor}
-                  className="Graph"
-                />
-              </div>
-            } />
-            <Route path="/table" element={<TableView artistsList={artistsList} />} />
-          </Routes>
+    <div className="App">
+      <header className="App-header">
+        <IconButton onClick={toggleDrawer} color="inherit">
+          <MenuIcon />
+        </IconButton>
+        <Typography variant="h6">Artist Data</Typography>
+        <div className="tabs">
+          <TabLinks />
         </div>
+      </header>
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={toggleDrawer}
+      >
+        <Box sx={{ width: 250, padding: 2 }}>
+          <Sliders
+            forceCenterStrength={forceCenterStrength}
+            setForceCenterStrength={setForceCenterStrength}
+            forceManyBodyStrength={forceManyBodyStrength}
+            setForceManyBodyStrength={setForceManyBodyStrength}
+            linkStrengthFactor={linkStrengthFactor}
+            setLinkStrengthFactor={setLinkStrengthFactor}
+          />
+        </Box>
+      </Drawer>
+      <div className="App-content">
+        <Routes>
+          <Route path="/graph" element={
+            <div className="tab-content">
+              <Graph
+                artistsRelationships={artistRelationships}
+                artistsList={artistsList}
+                forceCenterStrength={forceCenterStrength}
+                forceManyBodyStrength={forceManyBodyStrength}
+                linkStrengthFactor={linkStrengthFactor}
+                className="Graph"
+              />
+            </div>
+          } />
+          <Route path="/table" element={<TableView artistsList={artistsList} />} />
+        </Routes>
       </div>
-    </BrowserRouter>
+    </div>
   );
 };
 
