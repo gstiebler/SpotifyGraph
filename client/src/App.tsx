@@ -11,7 +11,7 @@ import { ArtistRelationship, getArtists, ProcessedArtist } from './Spotify';
 import TableView from './TableView';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
-const redirectUri = "http://localhost:3000/callback";
+const redirectUri = `${window.location.origin}/callback`;
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('graph');
