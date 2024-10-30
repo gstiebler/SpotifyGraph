@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { Route, Routes, Link, useLocation } from 'react-router-dom';
+import { Route, Routes, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
@@ -25,6 +25,8 @@ const App: React.FC = () => {
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (spotifyToken: AccessToken) => {
@@ -68,6 +70,7 @@ const App: React.FC = () => {
       </Drawer>
       <div className="App-content">
         <Routes>
+          <Route path="/" element={<Navigate to="/graph" />} />
           <Route path="/graph" element={
             <div className="tab-content">
               <Graph
