@@ -39,6 +39,24 @@
   background-color: #21a1f1;
 }
 
+.tabs a {
+  background-color: #61dafb;
+  border: none;
+  padding: 10px 20px;
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #282c34;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.tabs a.active {
+  background-color: #21a1f1;
+}
+
 .tab-content {
   flex: 1 1 auto;
   display: flex;
