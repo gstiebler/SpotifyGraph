@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Typography } from '@mui/material';
+import { Button, Typography, Box } from '@mui/material';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
 
 
@@ -19,13 +19,28 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="Home">
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        textAlign: 'center',
+        '& .MuiTypography-h3': {
+          mb: 2
+        },
+        '& .MuiButton-containedPrimary': {
+          mt: 2
+        }
+      }}
+    >
       <Typography variant="h3">Welcome to Spotify Graph</Typography>
       <Typography variant="body1">Log in to view your Spotify data visualized.</Typography>
       <Button variant="contained" color="primary" onClick={handleLogin}>
         Log in with Spotify
       </Button>
-    </div>
+    </Box>
   );
 };
 

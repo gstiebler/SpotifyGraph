@@ -5,87 +5,10 @@
   height: 100vh; /* Full viewport height */
 }
 
-.App-header {
-  flex: 0 1 auto;
-  background-color: #282c34;
-  padding: 10px 20px;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.App-content {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.tabs {
-  display: flex;
-}
-
-.tabs button {
-  background-color: #61dafb;
-  border: none;
-  padding: 10px 20px;
-  margin-left: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  color: #282c34;
-}
-
-.tabs button.active {
-  background-color: #21a1f1;
-}
-
-.tabs a {
-  background-color: #61dafb;
-  border: none;
-  padding: 10px 20px;
-  margin-left: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  color: #282c34;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-  border-radius: 4px;
-}
-
-.tabs a.active {
-  background-color: #21a1f1;
-}
-
-.tab-content {
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden; /* Prevent scrollbars */
-  width: 100%;
-  height: 100%;
-}
-
 .viz {
   width: 100%;
   height: 100%;
   background-color: black;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-table th, table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-}
-
-table th {
-  background-color: #f2f2f2;
-  text-align: left;
 }
 
 .tooltip {
@@ -94,21 +17,4 @@ table th {
   padding: 5px;
   border-radius: 5px;
   border: 1px solid grey;
-}
-
-.Home {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  text-align: center;
-}
-
-.Home .MuiTypography-h3 {
-  margin-bottom: 20px;
-}
-
-.Home .MuiButton-containedPrimary {
-  margin-top: 20px;
 }

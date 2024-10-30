@@ -11,9 +11,57 @@ import { ArtistRelationship, getArtists, ProcessedArtist, LoadingProgress as Loa
 import TableView from './TableView';
 import Home from './Home';
 import LoadingProgress from './LoadingProgress';
+import { styled } from '@mui/material/styles';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = `${window.location.origin}/callback`;
+
+const AppHeader = styled('header')(({ theme }) => ({
+  flex: '0 1 auto',
+  backgroundColor: theme.palette.grey[900],
+  padding: '10px 20px',
+  color: 'white',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between'
+}));
+
+const AppContent = styled('div')({
+  flex: '1 1 auto',
+  display: 'flex',
+  flexDirection: 'column',
+  backgroundColor: 'black'
+});
+
+const TabContainer = styled('div')({
+  display: 'flex'
+});
+
+const TabLink = styled(Link)(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  padding: '10px 20px',
+  marginLeft: '5px',
+  cursor: 'pointer',
+  fontSize: '16px',
+  color: theme.palette.primary.contrastText,
+  textDecoration: 'none',
+  display: 'inline-block',
+  textAlign: 'center',
+  borderRadius: '4px',
+  '&.active': {
+    backgroundColor: theme.palette.primary.dark,
+  }
+}));
+
+const TabContent = styled('div')({
+  flex: '1 1 auto',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  overflow: 'hidden',
+  width: '100%',
+  height: '100%'
+});
 
 const App: React.FC = () => {
   const [artistsList, setArtistsList] = useState<ProcessedArtist[]>([]);
@@ -51,15 +99,15 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <header className="App-header">
+      <AppHeader>
         <IconButton onClick={toggleDrawer} color="inherit">
           <MenuIcon />
         </IconButton>
         <Typography variant="h6">Artist Data</Typography>
-        <div className="tabs">
+        <TabContainer>
           <TabLinks />
-        </div>
-      </header>
+        </TabContainer>
+      </AppHeader>
       {loadingProgress && <LoadingProgress loadingProgress={loadingProgress} isVisible={isVisible} />}
       <Drawer
         anchor="left"
@@ -77,11 +125,11 @@ const App: React.FC = () => {
           />
         </Box>
       </Drawer>
-      <div className="App-content" style={{ backgroundColor: 'black' }}>
+      <AppContent>
         <Routes>
           <Route path="/" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
           <Route path="/graph" element={
-            <div className="tab-content">
+            <TabContent>
               <Graph
                 artistsRelationships={artistRelationships}
                 artistsList={artistsList}
@@ -90,11 +138,11 @@ const App: React.FC = () => {
                 linkStrengthFactor={linkStrengthFactor}
                 className="Graph"
               />
-            </div>
+            </TabContent>
           } />
           <Route path="/table" element={<TableView artistsList={artistsList} />} />
         </Routes>
-      </div>
+      </AppContent>
     </div>
   );
 };
@@ -103,8 +151,8 @@ const TabLinks: React.FC = () => {
   const location = useLocation();
   return (
     <>
-      <Link to="/graph" className={location.pathname === '/graph' ? 'active' : ''}>Graph</Link>
-      <Link to="/table" className={location.pathname === '/table' ? 'active' : ''}>Table</Link>
+      <TabLink to="/graph" className={location.pathname === '/graph' ? 'active' : ''}>Graph</TabLink>
+      <TabLink to="/table" className={location.pathname === '/table' ? 'active' : ''}>Table</TabLink>
     </>
   );
 };
