@@ -164,8 +164,6 @@ export const Graph: React.FC<{
         radius: getRadius(artist),
     }));
 
-    const [hasAddedComponents, setHasAddedComponents] = React.useState(false);
-
     const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
     const links = artistsRelationships.map((artistRelationships) => {
@@ -182,12 +180,8 @@ export const Graph: React.FC<{
     });
 
     useEffect(() => {
-        if (nodes.length === 0 || links.length === 0 || hasAddedComponents) {
-            return;
-        }
         executeD3(nodes, links);
-        setHasAddedComponents(true);
-    }, [nodes, links, hasAddedComponents]);
+    }, [nodes, links]);
 
     return (
         <div>
