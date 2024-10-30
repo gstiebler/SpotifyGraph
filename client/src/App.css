@@ -2,7 +2,7 @@
 .App {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh; /* Full viewport height */
 }
 
 .App-header {
@@ -44,7 +44,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: auto;
+  overflow: hidden; /* Prevent scrollbars */
+  width: 100%;
+  height: 100%;
+}
+
+.viz {
   width: 100%;
   height: 100%;
 }

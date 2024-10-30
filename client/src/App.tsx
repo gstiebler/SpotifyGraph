@@ -8,6 +8,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
 import { Graph } from './Graph';
 import { ArtistRelationship, getArtists, ProcessedArtist } from './Spotify';
+import TableView from './TableView';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
 const redirectUri = "http://localhost:3000/callback";
@@ -19,8 +20,8 @@ const App: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   
   const [forceCenterStrength, setForceCenterStrength] = useState(0.03);
-  const [forceManyBodyStrength, setForceManyBodyStrength] = useState(-5000);
-  const [linkStrengthFactor, setLinkStrengthFactor] = useState(0.5);
+  const [forceManyBodyStrength, setForceManyBodyStrength] = useState(-10000);
+  const [linkStrengthFactor, setLinkStrengthFactor] = useState(0.05);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -83,28 +84,7 @@ const App: React.FC = () => {
             </div>
           )}
           {activeTab === 'table' && (
-            <div className="tab-content">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Saved Tracks</th>
-                    <th>Score</th>
-                    <th>Related Artists</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {artistsList.map((artist) => (
-                    <tr key={artist.id}>
-                      <td><a href={`https://open.spotify.com/artist/${artist.id}`} target="_blank" rel="noopener noreferrer">{artist.name}</a></td>
-                      <td>{artist.savedTrackCount}</td>
-                      <td>{artist.score.toFixed(2)}</td>
-                      <td>{artist.relatedArtists.join(", ")}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TableView artistsList={artistsList} />
           )}
         </div>
       </div>

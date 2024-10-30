@@ -1,21 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { ArtistRelationship, ProcessedArtist } from './Spotify';
 
 const radiusFactor = 20;
 
 type svgType = d3.Selection<SVGSVGElement, unknown, null, undefined>;
-type d3SelectionType = d3.Selection<SVGCircleElement, unknown, SVGSVGElement, unknown>;
 type tooltipType = d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
 
 
 function executeD3(
-    nodes: any, 
-    links: any, 
-    forceCenterStrength: number, 
-    forceManyBodyStrength: number, 
-    linkStrengthFactor: number
+    nodes: any,
+    links: any,
+    forceCenterStrength: number,
+    forceManyBodyStrength: number,
+    linkStrengthFactor: number,
+    width: number,
+    height: number
 ) {
+    const svg = d3.select('#svg_class')
+    svg.selectAll('*').remove();
     // in the .viz container add an svg element following the margin convention
     const margin = {
         top: 20,
@@ -23,18 +26,14 @@ function executeD3(
         bottom: 20,
         left: 20,
     };
-    const width = 1500 - (margin.left + margin.right);
-    const height = 600 - (margin.top + margin.bottom);
 
-    const svg = d3
-        .select('#svg_class')
-        .attr('viewBox', `0 0 ${width + (margin.left + margin.right)} ${height + (margin.top + margin.bottom)}`)
+    svg.attr('viewBox', `0 0 ${width + (margin.left + margin.right)} ${height + (margin.top + margin.bottom)}`)
         .attr('width', width)
         .attr('height', height);
 
     // include the visualization in the nested group
     const group = svg
-        .select('#svg_g')
+        .append('g')
         .attr('transform', `translate(${margin.left} ${margin.right})`);
 
     const tooltip = d3.select("#artist_name") // select the tooltip div for manipulation
@@ -71,7 +70,7 @@ function executeD3(
     }
 
     svg.call(zoom as any)
-    .call(zoom.transform as any, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.02));
+        .call(zoom.transform as any, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.02));
 
     function filter(event: any) {
         event.preventDefault();
@@ -195,18 +194,21 @@ export const Graph: React.FC<GraphProps> = ({
             strength: artistRelationships.strength,
         }
     });
+    const svgRef = useRef<SVGSVGElement>(null);
+
+    const width = svgRef.current?.clientWidth || 1200;
+    const height = svgRef.current?.clientHeight || 800;
 
     useEffect(() => {
-        executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor);
-    }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor]);
+        executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, width, height);
+        console.log(`Use effect: ${forceCenterStrength}, ${forceManyBodyStrength}, ${linkStrengthFactor}`);
+    }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, width, height]);
 
     return (
-        <div>
+        <div id="d3-container">
             <div id="artist_name" />
-            <div className="viz" > 
-                <svg id="svg_class">
-                    <g id="svg_g" />
-                </svg>
+            <div className="viz" >
+                <svg id="svg_class" />
             </div>
         </div>
     );
