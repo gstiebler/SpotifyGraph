@@ -68,7 +68,8 @@ function executeD3(nodes: any, links: any) {
         group.attr("transform", transform);
     }
 
-    svg.call(zoom as any);
+    svg.call(zoom as any)
+    .call(zoom.transform as any, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.02));
 
     function filter(event: any) {
         event.preventDefault();
@@ -100,13 +101,15 @@ function stringToRandomInRange(str: string, min: number, max: number) {
 
 function getSavedArtistColor(d: any) {
     const blueHue = 240;
-    const randomComponent = stringToRandomInRange(d.name, -25, 25);
+    const colorRange = 8;
+    const randomComponent = stringToRandomInRange(d.name, -colorRange, colorRange);
     return `hsla(${blueHue + randomComponent}, 100%, 60%, 1)`;
 }
 
 function getSuggestedArtistColor(d: any) {
     const yellowHue = 60;
-    const randomComponent = stringToRandomInRange(d.name, -15, 15);
+    const colorRange = 5;
+    const randomComponent = stringToRandomInRange(d.name, -colorRange, colorRange);
     return `hsla(${yellowHue + randomComponent}, 100%, 30%, 1)`;
 }
 
