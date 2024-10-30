@@ -128,8 +128,8 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
             return d.y;
         })
         .style('fill', (d: any) => d.savedTrackCount > 0 ? getSavedArtistColor(d) : getSuggestedArtistColor(d))
-        .on("mouseover", tooltip_in) // when the mouse hovers a node, call the tooltip_in function to create the tooltip
-        .on("mouseout", tooltip_out) // when the mouse stops hovering a node, call the tooltip_out function to get rid of the tooltip;
+        .on("mousemove", tooltip_in) // when the mouse hovers a node, call the tooltip_in function to create the tooltip
+        .on("mouseout", tooltip_out);
 
 
     function tooltip_in(event: any, d: any) { // pass event and d to this function so that it can access d for our data
