@@ -9,14 +9,13 @@ import { Graph } from './Graph';
 import TableView from './TableView';
 import Home from './Home';
 import { styled } from '@mui/material/styles';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useSetRecoilState } from 'recoil';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { THEME } from './constants';
 import { login, tokenState } from './state/authState';
 import SpotifyDataLoader from './SpotifyDataLoader';
 
-const theme = createTheme(THEME);
+// Remove theme creation
+// const theme = createTheme(THEME);
 
 const AppHeader = styled('header')(({ theme }) => ({
   flex: '0 1 auto',
@@ -119,30 +118,28 @@ const App: React.FC = () => {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Routes>
-                    <Route path="/graph" element={
-                      <TabContent>
-                        <Graph />
-                      </TabContent>
-                    } />
-                    <Route path="/table" element={<TableView />} />
-                  </Routes>
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </div>
-    </ThemeProvider>
+    <div className="App">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Routes>
+                  <Route path="/graph" element={
+                    <TabContent>
+                      <Graph />
+                    </TabContent>
+                  } />
+                  <Route path="/table" element={<TableView />} />
+                </Routes>
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </div>
   );
 };
 

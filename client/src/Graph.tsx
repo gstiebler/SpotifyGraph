@@ -180,10 +180,10 @@ const getRadius = (artist: ProcessedArtist) => {
 }
 
 interface GraphProps {
-  className?: string;
+ 
 }
 
-export const Graph: React.FC<GraphProps> = ({ className }) => {
+export const Graph: React.FC<GraphProps> = () => {
   const artistsList = useRecoilValue(artistsListState);
   const artistsRelationships = useRecoilValue(artistRelationshipsState);
   const forceCenterStrength = useRecoilValue(forceCenterStrengthState);
