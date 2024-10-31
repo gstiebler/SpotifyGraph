@@ -70,18 +70,46 @@ const TabContent = styled('div')({
   height: '100%'
 });
 
-const App: React.FC = () => {
-  const setArtistsList = useSetRecoilState(artistsListState);
-  const setArtistRelationships = useSetRecoilState(artistRelationshipsState);
-  
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState<LoadingProgressType | null>(null);
-  const [isVisible, setIsVisible] = useState(true);
-  const setToken = useSetRecoilState(tokenState);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
+
+  return (
+    <>
+      <AppHeader>
+        <IconButton onClick={toggleDrawer} color="inherit">
+          <MenuIcon />
+        </IconButton>
+        <Typography variant="h6">Artist Data</Typography>
+        <TabContainer>
+          <TabLinks />
+        </TabContainer>
+      </AppHeader>
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={toggleDrawer}
+      >
+        <Box sx={{ width: 250, padding: 2 }}>
+          <Sliders />
+        </Box>
+      </Drawer>
+      <AppContent>
+        {children}
+      </AppContent>
+    </>
+  );
+};
+
+const App: React.FC = () => {
+  const setArtistsList = useSetRecoilState(artistsListState);
+  const setArtistRelationships = useSetRecoilState(artistRelationshipsState);
+  const [loadingProgress, setLoadingProgress] = useState<LoadingProgressType | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const setToken = useSetRecoilState(tokenState);
 
   useEffect(() => {
     login(async (spotifyToken: AccessToken) => {
@@ -104,32 +132,14 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        <AppHeader>
-          <IconButton onClick={toggleDrawer} color="inherit">
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6">Artist Data</Typography>
-          <TabContainer>
-            <TabLinks />
-          </TabContainer>
-        </AppHeader>
         {loadingProgress && <LoadingProgress loadingProgress={loadingProgress} isVisible={isVisible} />}
-        <Drawer
-          anchor="left"
-          open={drawerOpen}
-          onClose={toggleDrawer}
-        >
-          <Box sx={{ width: 250, padding: 2 }}>
-            <Sliders />
-          </Box>
-        </Drawer>
-        <AppContent>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route
-              path="*"
-              element={
-                <ProtectedRoute>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <Layout>
                   <Routes>
                     <Route path="/graph" element={
                       <TabContent>
@@ -138,11 +148,11 @@ const App: React.FC = () => {
                     } />
                     <Route path="/table" element={<TableView />} />
                   </Routes>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </AppContent>
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
       </div>
     </ThemeProvider>
   );
