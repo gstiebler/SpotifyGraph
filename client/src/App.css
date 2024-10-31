@@ -26,10 +26,17 @@
 }
 
 .tooltip {
-  fill: #FFFFFF;
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
   font-family: sans-serif;
-  padding: 5px;
-  border-radius: 5px;
-  border: 1px solid #1DB954;
-  background-color: rgba(25, 20, 20, 0.9);
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.tooltip.visible {
+  opacity: 1;
 }

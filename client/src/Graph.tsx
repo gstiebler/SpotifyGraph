@@ -53,11 +53,10 @@ function executeD3(
         .append('g')
         .attr('transform', `translate(${margin.left} ${margin.right})`);
 
-    const tooltip = d3.select("#artist_name") // select the tooltip div for manipulation
-        .style("position", "absolute") // the absolute position is necessary so that we can manually define its position later
-        .style("visibility", "hidden") // hide it from default at the start so it only appears on hover
-        .style("background-color", "white")
-        .attr("class", "tooltip") as any;
+    const tooltip = d3.select("#artist_name")
+        .attr("class", "tooltip")
+        .style("position", "fixed")
+        .style("z-index", "1000");
 
     const simulation = d3.forceSimulation(nodes)
         .force('charge', d3.forceManyBody().strength(forceManyBodyStrength))
@@ -68,7 +67,7 @@ function executeD3(
             .strength((d: any) => {
                 return d.strength * linkStrengthFactor;
             }))
-        .on('tick', () => ticked(group, nodes, tooltip))
+        .on('tick', () => ticked(group, nodes, tooltip as any))
         .force("x", d3.forceX(10))
         .force("y", d3.forceY(-10));
 
@@ -155,21 +154,16 @@ function updateNodes(svg: svgType, nodes: any, tooltip: tooltipType) {
         
         return tooltip
             .html("<h4>" + d.name + "</h4>")
-            .style("visibility", "visible")
-            .style("top", event.pageY + "px")
-            .style("left", event.pageX + "px")
+            .classed("visible", true)
+            .style("top", (event.clientY + 10) + "px")
+            .style("left", (event.clientX + 10) + "px")
             .style("background-color", backgroundColor)
-            .style("color", "#000000")
-            .style("padding", "8px")
-            .style("border-radius", "4px")
-            .style("font-family", "Arial, sans-serif");
+            .style("color", "#000000");
     }
 
     function tooltip_out() {
         return tooltip
-            .transition()
-            .duration(50) // give the hide behavior a 50 milisecond delay so that it doesn't jump around as the network moves
-            .style("visibility", "hidden"); // hide the tooltip when the mouse stops hovering
+            .classed("visible", false);
     }
 }
 
@@ -236,6 +230,7 @@ export const Graph: React.FC<GraphProps> = () => {
 
   useEffect(() => {
     if (dimensions.width && dimensions.height) {
+      console.log(`Executing D3 ${nodes.length} nodes, ${links.length} links`);
       executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions.width, dimensions.height);
     }
   }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions]);
