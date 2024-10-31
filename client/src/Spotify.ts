@@ -3,8 +3,8 @@ import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
 
 const MAX_ARTISTS = 20000;
+const NUM_FILTERED_ARTISTS = 3000;
 const MAX_RELATED_ARTISTS = 20;
-const SCORE_THRESHOULD = 3;
 
 export type StoredArtist = {
     id: string;
@@ -50,13 +50,13 @@ type SpotifyGraphDB = Dexie & {
 };
 
 const getArtistsMapFromTracks = async (
-    token: AccessToken, 
+    token: AccessToken,
     clientId: string,
     onProgress?: (progress: LoadingProgress) => void
 ): Promise<Map<string, StoredArtist>> => {
     const api = SpotifyApi.withAccessToken(clientId, token!);
     const tracks = [] as SavedTrack[];
-    
+
     // Get total tracks first
     const initial = await api.currentUser.tracks.savedTracks(1, 0);
     const totalTracks = initial.total;
@@ -91,14 +91,14 @@ const getArtistsMapFromTracks = async (
 }
 
 const getRelatedArtists = async (
-    artistsIds: string[], 
-    api: SpotifyApi, 
+    artistsIds: string[],
+    api: SpotifyApi,
     db: SpotifyGraphDB,
     onProgress?: (progress: LoadingProgress) => void
 ) => {
     const result = [] as { artistId: string, relatedArtists: SimplifiedArtist[] }[];
     const total = artistsIds.length;
-    
+
     // Caution when parallelizing this loop, the Spotify API has a rate limit
     for (const [index, id] of artistsIds.entries()) {
         // Check if we have the data in the cache
@@ -122,7 +122,7 @@ const getRelatedArtists = async (
         } catch (e) {
             console.error('Failed to save related artists to cache', e);
         }
-        
+
         onProgress?.({
             phase: 'artists',
             current: index + 1,
@@ -133,7 +133,7 @@ const getRelatedArtists = async (
 }
 
 export const getArtists = async (
-    token: AccessToken, 
+    token: AccessToken,
     clientId: string,
     onProgress?: (progress: LoadingProgress) => void
 ) => {
@@ -248,7 +248,14 @@ export const getArtists = async (
 };
 
 function filterArtistsAndRelationships(artistsList: ProcessedArtist[], artistRelationships: ArtistRelationship[]) {
-    const filteredArtistsList = artistsList.filter((artist) => artist.score > SCORE_THRESHOULD);
+    const sortedArtistsList = artistsList.sort((a, b) => {
+        const scoreDiff = b.score - a.score;
+        if (scoreDiff !== 0) {
+            return scoreDiff;
+        }
+        return b.savedTrackCount - a.savedTrackCount;
+    });
+    const filteredArtistsList = sortedArtistsList.slice(0, NUM_FILTERED_ARTISTS);
     const artistsMap = new Map(filteredArtistsList.map((artist) => [artist.id, artist]));
     const filteredArtistsRelationships = artistRelationships.filter(
         (relationship) => artistsMap.has(relationship.artistId1) && artistsMap.has(relationship.artistId2));
