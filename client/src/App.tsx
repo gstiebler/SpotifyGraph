@@ -14,7 +14,7 @@ import { styled } from '@mui/material/styles';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
-const redirectUri = `${window.location.origin}/callback`;
+const redirectUri = `${window.location.origin}/`;
 
 const theme = createTheme({
   palette: {
@@ -147,6 +147,7 @@ const App: React.FC = () => {
         <AppContent>
           <Routes>
             <Route path="/" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
+            <Route path="/callback" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
             <Route path="/graph" element={
               <TabContent>
                 <Graph

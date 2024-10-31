@@ -99,6 +99,7 @@ const getRelatedArtists = async (
     const result = [] as { artistId: string, relatedArtists: SimplifiedArtist[] }[];
     const total = artistsIds.length;
     
+    // Caution when parallelizing this loop, the Spotify API has a rate limit
     for (const [index, id] of artistsIds.entries()) {
         // Check if we have the data in the cache
         const cachedData = await db.spotifyGraph.get(id);
