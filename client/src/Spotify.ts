@@ -1,6 +1,7 @@
 import { AccessToken, SavedTrack, SimplifiedArtist, SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { getFromCacheOrCalculate } from "./util";
 import Dexie, { EntityTable } from 'dexie';
+import { SPOTIFY_CONFIG } from "./constants";
 
 const MAX_ARTISTS = 20000;
 const NUM_FILTERED_ARTISTS = 3000;
@@ -51,10 +52,9 @@ type SpotifyGraphDB = Dexie & {
 
 const getArtistsMapFromTracks = async (
     token: AccessToken,
-    clientId: string,
     onProgress?: (progress: LoadingProgress) => void
 ): Promise<Map<string, StoredArtist>> => {
-    const api = SpotifyApi.withAccessToken(clientId, token!);
+    const api = SpotifyApi.withAccessToken(SPOTIFY_CONFIG.clientId, token!);
     const tracks = [] as SavedTrack[];
 
     // Get total tracks first
@@ -134,10 +134,9 @@ const getRelatedArtists = async (
 
 export const getArtists = async (
     token: AccessToken,
-    clientId: string,
     onProgress?: (progress: LoadingProgress) => void
 ) => {
-    const api = SpotifyApi.withAccessToken(clientId, token!);
+    const api = SpotifyApi.withAccessToken(SPOTIFY_CONFIG.clientId, token!);
 
     const db = new Dexie('spotifyGraph') as SpotifyGraphDB;
     if (!db) {
@@ -148,7 +147,7 @@ export const getArtists = async (
     });
 
     const artistsMapFromTracksPairs = await getFromCacheOrCalculate('artistsMap', async () => {
-        const mapResult = await getArtistsMapFromTracks(token, clientId, onProgress);
+        const mapResult = await getArtistsMapFromTracks(token, onProgress);
         return [...mapResult.entries()];
     });
     const artistsMapFromTracks = new Map<string, StoredArtist>(artistsMapFromTracksPairs.slice(0, MAX_ARTISTS));

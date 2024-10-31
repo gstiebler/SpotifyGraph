@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
-import { Route, Routes, Link, useLocation, Navigate } from 'react-router-dom';
+import { Route, Routes, Link, useLocation } from 'react-router-dom';
 import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
@@ -12,27 +12,12 @@ import Home from './Home';
 import LoadingProgress from './LoadingProgress';
 import { styled } from '@mui/material/styles';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useRecoilState } from 'recoil';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { THEME, SPOTIFY_CONFIG } from './constants';
+import { login, tokenState } from './state/authState';
 
-const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
-const redirectUri = `${window.location.origin}/`;
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1DB954',
-      dark: '#1ed760',
-      contrastText: '#FFFFFF'
-    },
-    background: {
-      default: '#191414',
-      paper: '#282828',
-    },
-    text: {
-      primary: '#FFFFFF',
-      secondary: '#B3B3B3',
-    }
-  }
-});
+const theme = createTheme(THEME);
 
 const AppHeader = styled('header')(({ theme }) => ({
   flex: '0 1 auto',
@@ -85,7 +70,7 @@ const App: React.FC = () => {
   const [artistsList, setArtistsList] = useState<ProcessedArtist[]>([]);
   const [artistRelationships, setArtistRelationships] = useState<ArtistRelationship[]>([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  
+
   const [forceCenterStrength, setForceCenterStrength] = useState(0.03);
   const [forceManyBodyStrength, setForceManyBodyStrength] = useState(-10000);
   const [linkStrengthFactor, setLinkStrengthFactor] = useState(0.05);
@@ -96,13 +81,16 @@ const App: React.FC = () => {
     setDrawerOpen(!drawerOpen);
   };
 
+  const [tokenRecoil, setToken] = useRecoilState(tokenState);
+
   useEffect(() => {
-    SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (spotifyToken: AccessToken) => {
+    login(async (spotifyToken: AccessToken) => {
       if (!spotifyToken) {
         return;
       }
+      setToken(spotifyToken);
       console.log(spotifyToken);
-      const { artistsList: artistsListLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, clientId, setLoadingProgress);
+      const { artistsList: artistsListLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, setLoadingProgress);
 
       setArtistsList(artistsListLocal);
       setArtistRelationships(artistRelationshipsLocal);
@@ -111,9 +99,7 @@ const App: React.FC = () => {
     }).then((a) => {
       console.log("Authorization complete", a);
     });
-  }, []);
-
-  const isLoggedIn = false;
+  }, [setToken]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -146,21 +132,29 @@ const App: React.FC = () => {
         </Drawer>
         <AppContent>
           <Routes>
-            <Route path="/" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
-            <Route path="/callback" element={isLoggedIn ? <Navigate to="/graph" /> : <Home />} />
-            <Route path="/graph" element={
-              <TabContent>
-                <Graph
-                  artistsRelationships={artistRelationships}
-                  artistsList={artistsList}
-                  forceCenterStrength={forceCenterStrength}
-                  forceManyBodyStrength={forceManyBodyStrength}
-                  linkStrengthFactor={linkStrengthFactor}
-                  className="Graph"
-                />
-              </TabContent>
-            } />
-            <Route path="/table" element={<TableView artistsList={artistsList} />} />
+            <Route path="/" element={<Home />} />
+            <Route
+              path="*"
+              element={
+                <ProtectedRoute>
+                  <Routes>
+                    <Route path="/graph" element={
+                      <TabContent>
+                        <Graph
+                          artistsRelationships={artistRelationships}
+                          artistsList={artistsList}
+                          forceCenterStrength={forceCenterStrength}
+                          forceManyBodyStrength={forceManyBodyStrength}
+                          linkStrengthFactor={linkStrengthFactor}
+                          className="Graph"
+                        />
+                      </TabContent>
+                    } />
+                    <Route path="/table" element={<TableView artistsList={artistsList} />} />
+                  </Routes>
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </AppContent>
       </div>

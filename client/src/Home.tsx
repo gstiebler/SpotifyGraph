@@ -1,21 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, Typography, Box } from '@mui/material';
-import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
-
-
-const clientId = "88ea8220c6e443d9aec4aee0405c51eb";
-const redirectUri = `${window.location.origin}/callback`;
+import { useNavigate } from 'react-router-dom';
+import { useRecoilState } from 'recoil';
+import { tokenState, login } from './state/authState';
+import { AccessToken } from '@spotify/web-api-ts-sdk';
 
 const Home: React.FC = () => {
-  const handleLogin = () => {
-    SpotifyApi.performUserAuthorization(clientId, redirectUri, ["user-library-read"], async (spotifyToken: AccessToken) => {
-      if (!spotifyToken) {
-        return;
-      }
-      console.log(spotifyToken);
-    }).then((a) => {
-      console.log("Authorization complete", a);
+  const [tokenRecoil, setToken] = useRecoilState(tokenState);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!!tokenRecoil) {
+      navigate('/graph');
+    }
+  }, [tokenRecoil, navigate]);
+
+  const handleLogin = async () => {
+    const response = await login((token: AccessToken) => {
+      setToken(token);
     });
+    console.log('Authorization complete', response);
   };
 
   return (
