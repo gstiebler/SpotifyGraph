@@ -100,7 +100,6 @@ const getRelatedArtists = async (
     const total = artistsIds.length;
     
     for (const [index, id] of artistsIds.entries()) {
-        console.log(`Fetching related artists for ${id}`);
         // Check if we have the data in the cache
         const cachedData = await db.spotifyGraph.get(id);
         if (cachedData) {
@@ -111,15 +110,17 @@ const getRelatedArtists = async (
             continue;
         }
 
-        const count = await db.spotifyGraph.count();
-        console.log(`Number of artists in the DB: ${count}`);
         const artists = (await api.artists.relatedArtists(id)).artists;
         result.push({ artistId: id, relatedArtists: artists });
 
-        await db.spotifyGraph.add({
-            id,
-            relatedArtists: artists
-        });
+        try {
+            await db.spotifyGraph.put({
+                id,
+                relatedArtists: artists
+            });
+        } catch (e) {
+            console.error('Failed to save related artists to cache', e);
+        }
         
         onProgress?.({
             phase: 'artists',
