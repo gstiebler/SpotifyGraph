@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { useRecoilValue } from 'recoil';
 import { ArtistRelationship, ProcessedArtist } from './Spotify';
+import {
+  artistsListState,
+  artistRelationshipsState,
+  forceCenterStrengthState,
+  forceManyBodyStrengthState,
+  linkStrengthFactorState,
+} from './state/graphState';
 
 const radiusFactor = 20;
 
@@ -172,78 +180,72 @@ const getRadius = (artist: ProcessedArtist) => {
 }
 
 interface GraphProps {
-    artistsList: ProcessedArtist[];
-    artistsRelationships: ArtistRelationship[];
-    forceCenterStrength: number;
-    forceManyBodyStrength: number;
-    linkStrengthFactor: number;
-    className?: string;
+  className?: string;
 }
 
-export const Graph: React.FC<GraphProps> = ({
-    artistsList,
-    artistsRelationships,
-    forceCenterStrength,
-    forceManyBodyStrength,
-    linkStrengthFactor,
-    className,
-}) => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+export const Graph: React.FC<GraphProps> = ({ className }) => {
+  const artistsList = useRecoilValue(artistsListState);
+  const artistsRelationships = useRecoilValue(artistRelationshipsState);
+  const forceCenterStrength = useRecoilValue(forceCenterStrengthState);
+  const forceManyBodyStrength = useRecoilValue(forceManyBodyStrengthState);
+  const linkStrengthFactor = useRecoilValue(linkStrengthFactorState);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-    useEffect(() => {
-        const updateDimensions = () => {
-            if (containerRef.current) {
-                setDimensions({
-                    width: containerRef.current.clientWidth,
-                    height: containerRef.current.clientHeight
-                });
-            }
-        };
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight
+        });
+      }
+    };
 
-        // Initial dimensions
-        updateDimensions();
+    // Initial dimensions
+    updateDimensions();
 
-        // Add resize listener
-        window.addEventListener('resize', updateDimensions);
+    // Add resize listener
+    window.addEventListener('resize', updateDimensions);
 
-        return () => window.removeEventListener('resize', updateDimensions);
-    }, []);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
-    const nodes = artistsList.map((artist, index) => ({
-        name: artist.name,
-        id: artist.id, index,
-        savedTrackCount: artist.savedTrackCount,
-        radius: getRadius(artist),
-    }));
+  const nodes = artistsList.map((artist, index) => ({
+    name: artist.name,
+    id: artist.id, index,
+    savedTrackCount: artist.savedTrackCount,
+    radius: getRadius(artist),
+  }));
 
-    const nodesMap = new Map(nodes.map((node) => [node.id, node]));
+  const nodesMap = new Map(nodes.map((node) => [node.id, node]));
 
-    const links = artistsRelationships.map((artistRelationships) => {
-        const source = nodesMap.get(artistRelationships.artistId1);
-        const target = nodesMap.get(artistRelationships.artistId2);
-        if (!source || !target) {
-            throw new Error(`Invalid artist relationship ${artistRelationships.artistId1} - ${artistRelationships.artistId2}`);
-        }
-        return {
-            source,
-            target,
-            strength: artistRelationships.strength,
-        }
-    });
+  const links = artistsRelationships.map((artistRelationships) => {
+    const source = nodesMap.get(artistRelationships.artistId1);
+    const target = nodesMap.get(artistRelationships.artistId2);
+    if (!source || !target) {
+      throw new Error(`Invalid artist relationship ${artistRelationships.artistId1} - ${artistRelationships.artistId2}`);
+    }
+    return {
+      source,
+      target,
+      strength: artistRelationships.strength,
+    }
+  });
 
-    useEffect(() => {
-        if (dimensions.width && dimensions.height) {
-            executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions.width, dimensions.height);
-        }
-    }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions]);
+  useEffect(() => {
+    if (dimensions.width && dimensions.height) {
+      executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions.width, dimensions.height);
+    }
+  }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions]);
 
-    return (
-        <div id="d3-container" ref={containerRef}>
-            <div id="artist_name" />
-            <div className="viz">
-                <svg id="svg_class" />
-            </div>
-        </div>
-    );
+  return (
+    <div id="d3-container" ref={containerRef}>
+      <div id="artist_name" />
+      <div className="viz">
+        <svg id="svg_class" />
+      </div>
+    </div>
+  );
 };

@@ -1,24 +1,18 @@
 // Params.tsx
 import React from 'react';
 import { Slider, Typography, Box } from '@mui/material';
+import { useRecoilState } from 'recoil';
+import {
+  forceCenterStrengthState,
+  forceManyBodyStrengthState,
+  linkStrengthFactorState,
+} from './state/graphState';
 
-interface SlidersProps {
-  forceCenterStrength: number;
-  setForceCenterStrength: (value: number) => void;
-  forceManyBodyStrength: number;
-  setForceManyBodyStrength: (value: number) => void;
-  linkStrengthFactor: number;
-  setLinkStrengthFactor: (value: number) => void;
-}
+const Sliders: React.FC = () => {
+  const [forceCenterStrength, setForceCenterStrength] = useRecoilState(forceCenterStrengthState);
+  const [forceManyBodyStrength, setForceManyBodyStrength] = useRecoilState(forceManyBodyStrengthState);
+  const [linkStrengthFactor, setLinkStrengthFactor] = useRecoilState(linkStrengthFactorState);
 
-const Sliders: React.FC<SlidersProps> = ({
-  forceCenterStrength,
-  setForceCenterStrength,
-  forceManyBodyStrength,
-  setForceManyBodyStrength,
-  linkStrengthFactor,
-  setLinkStrengthFactor,
-}) => {
   return (
     <Box display="flex" flexDirection="column" gap={2}>
       <Box>

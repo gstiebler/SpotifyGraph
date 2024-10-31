@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { AccessToken, SpotifyApi } from '@spotify/web-api-ts-sdk';
+import { AccessToken } from '@spotify/web-api-ts-sdk';
 import { Route, Routes, Link, useLocation } from 'react-router-dom';
 import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
 import { Graph } from './Graph';
-import { ArtistRelationship, getArtists, ProcessedArtist, LoadingProgress as LoadingProgressType } from './Spotify';
+import { getArtists, LoadingProgress as LoadingProgressType } from './Spotify';
 import TableView from './TableView';
 import Home from './Home';
 import LoadingProgress from './LoadingProgress';
 import { styled } from '@mui/material/styles';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { useRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { THEME, SPOTIFY_CONFIG } from './constants';
+import { THEME } from './constants';
 import { login, tokenState } from './state/authState';
+import {
+  artistsListState,
+  artistRelationshipsState,
+} from './state/graphState';
 
 const theme = createTheme(THEME);
 
@@ -67,21 +71,17 @@ const TabContent = styled('div')({
 });
 
 const App: React.FC = () => {
-  const [artistsList, setArtistsList] = useState<ProcessedArtist[]>([]);
-  const [artistRelationships, setArtistRelationships] = useState<ArtistRelationship[]>([]);
+  const setArtistsList = useSetRecoilState(artistsListState);
+  const setArtistRelationships = useSetRecoilState(artistRelationshipsState);
+  
   const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const [forceCenterStrength, setForceCenterStrength] = useState(0.03);
-  const [forceManyBodyStrength, setForceManyBodyStrength] = useState(-10000);
-  const [linkStrengthFactor, setLinkStrengthFactor] = useState(0.05);
   const [loadingProgress, setLoadingProgress] = useState<LoadingProgressType | null>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const setToken = useSetRecoilState(tokenState);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
-
-  const [tokenRecoil, setToken] = useRecoilState(tokenState);
 
   useEffect(() => {
     login(async (spotifyToken: AccessToken) => {
@@ -120,14 +120,7 @@ const App: React.FC = () => {
           onClose={toggleDrawer}
         >
           <Box sx={{ width: 250, padding: 2 }}>
-            <Sliders
-              forceCenterStrength={forceCenterStrength}
-              setForceCenterStrength={setForceCenterStrength}
-              forceManyBodyStrength={forceManyBodyStrength}
-              setForceManyBodyStrength={setForceManyBodyStrength}
-              linkStrengthFactor={linkStrengthFactor}
-              setLinkStrengthFactor={setLinkStrengthFactor}
-            />
+            <Sliders />
           </Box>
         </Drawer>
         <AppContent>
@@ -140,17 +133,10 @@ const App: React.FC = () => {
                   <Routes>
                     <Route path="/graph" element={
                       <TabContent>
-                        <Graph
-                          artistsRelationships={artistRelationships}
-                          artistsList={artistsList}
-                          forceCenterStrength={forceCenterStrength}
-                          forceManyBodyStrength={forceManyBodyStrength}
-                          linkStrengthFactor={linkStrengthFactor}
-                          className="Graph"
-                        />
+                        <Graph />
                       </TabContent>
                     } />
-                    <Route path="/table" element={<TableView artistsList={artistsList} />} />
+                    <Route path="/table" element={<TableView />} />
                   </Routes>
                 </ProtectedRoute>
               }

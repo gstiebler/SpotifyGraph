@@ -1,6 +1,7 @@
 import React from 'react';
-import { ProcessedArtist } from './Spotify';
 import { styled } from '@mui/material/styles';
+import { useRecoilValue } from 'recoil';
+import { artistsListState } from './state/graphState';
 
 const StyledTable = styled('table')({
   backgroundColor: '#191414',
@@ -24,11 +25,9 @@ const StyledTable = styled('table')({
   }
 });
 
-interface TableViewProps {
-  artistsList: ProcessedArtist[];
-}
+const TableView: React.FC = () => {
+  const artistsList = useRecoilValue(artistsListState);
 
-const TableView: React.FC<TableViewProps> = ({ artistsList }) => {
   return (
     <div className="tab-content" style={{ backgroundColor: '#191414', padding: '20px' }}>
       <StyledTable>
