@@ -6,20 +6,15 @@ import { Drawer, IconButton, Typography, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import Sliders from './Params';
 import { Graph } from './Graph';
-import { getArtists, LoadingProgress as LoadingProgressType } from './Spotify';
 import TableView from './TableView';
 import Home from './Home';
-import LoadingProgress from './LoadingProgress';
 import { styled } from '@mui/material/styles';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useSetRecoilState } from 'recoil';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { THEME } from './constants';
 import { login, tokenState } from './state/authState';
-import {
-  artistsListState,
-  artistRelationshipsState,
-} from './state/graphState';
+import SpotifyDataLoader from './SpotifyDataLoader';
 
 const theme = createTheme(THEME);
 
@@ -105,34 +100,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
-  const setArtistsList = useSetRecoilState(artistsListState);
-  const setArtistRelationships = useSetRecoilState(artistRelationshipsState);
-  const [loadingProgress, setLoadingProgress] = useState<LoadingProgressType | null>(null);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const setToken = useSetRecoilState(tokenState);
+  const [spotifyToken, setSpotifyToken] = useState<AccessToken | null>(null);
 
   useEffect(() => {
-    login(async (spotifyToken: AccessToken) => {
-      if (!spotifyToken) {
-        return;
-      }
-      setToken(spotifyToken);
-      console.log(spotifyToken);
-      const { artistsList: artistsListLocal, artistRelationships: artistRelationshipsLocal } = await getArtists(spotifyToken, setLoadingProgress);
-
-      setArtistsList(artistsListLocal);
-      setArtistRelationships(artistRelationshipsLocal);
-      setLoadingProgress(null);
-      setIsVisible(false);
+    login(async (token: AccessToken) => {
+      if (!token) return;
+      setToken(token);
+      setSpotifyToken(token);
     }).then((a) => {
       console.log("Authorization complete", a);
     });
   }, [setToken]);
 
+  if (isLoading && spotifyToken) {
+    return <SpotifyDataLoader token={spotifyToken} onLoadingComplete={() => setIsLoading(false)} />;
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
-        {loadingProgress && <LoadingProgress loadingProgress={loadingProgress} isVisible={isVisible} />}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route
