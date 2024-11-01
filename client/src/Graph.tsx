@@ -252,6 +252,9 @@ export const Graph: React.FC<GraphProps> = () => {
     if (simulationState) {
       simulationState.force('charge', d3.forceManyBody().strength(forceManyBodyStrength));
       simulationState.force('center', d3.forceCenter(dimensions.width / 2, dimensions.height / 2).strength(forceCenterStrength));
+
+      (simulationState.force('link') as d3.ForceLink<d3.SimulationNodeDatum, d3.SimulationLinkDatum<d3.SimulationNodeDatum>>)
+        ?.strength((d: any) => d.strength * linkStrengthFactor);
       simulationState.alpha(1).restart();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
