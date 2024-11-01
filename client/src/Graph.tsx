@@ -14,7 +14,7 @@ const radiusFactor = 20;
 
 type svgType = d3.Selection<SVGSVGElement, unknown, null, undefined>;
 type tooltipType = d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
-
+type simulationType = d3.Simulation<d3.SimulationNodeDatum, undefined>;
 
 function executeD3(
     nodes: any,
@@ -24,7 +24,7 @@ function executeD3(
     linkStrengthFactor: number,
     width: number,
     height: number
-) {
+): simulationType {
     const svg = d3.select('#svg_class')
     svg.selectAll('*').remove();
 
@@ -93,6 +93,7 @@ function executeD3(
         return (!event.ctrlKey || event.type === 'wheel') && !event.button;
     }
 
+    return simulation;
 }
 
 function ticked(svg: any, nodes: any, tooltip: tooltipType) {
@@ -183,6 +184,7 @@ export const Graph: React.FC<GraphProps> = () => {
   const forceCenterStrength = useRecoilValue(forceCenterStrengthState);
   const forceManyBodyStrength = useRecoilValue(forceManyBodyStrengthState);
   const linkStrengthFactor = useRecoilValue(linkStrengthFactorState);
+  const [simulationState, setSimulation] = useState<simulationType | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -230,10 +232,30 @@ export const Graph: React.FC<GraphProps> = () => {
 
   useEffect(() => {
     if (dimensions.width && dimensions.height) {
-      console.log(`Executing D3 ${nodes.length} nodes, ${links.length} links`);
-      executeD3(nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions.width, dimensions.height);
+      console.log(`Executing D3 ${nodes.length} nodes, ${links.length} links, ${forceCenterStrength}, 
+        ${forceManyBodyStrength}, ${linkStrengthFactor}, ${dimensions.width}, ${dimensions.height}`);
+      const simulation = executeD3(
+        nodes, 
+        links, 
+        forceCenterStrength, 
+        forceManyBodyStrength, 
+        linkStrengthFactor, 
+        dimensions.width, 
+        dimensions.height
+      );
+      setSimulation(simulation);
     }
-  }, [nodes, links, forceCenterStrength, forceManyBodyStrength, linkStrengthFactor, dimensions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artistsList]);
+
+  useEffect(() => {
+    if (simulationState) {
+      simulationState.force('charge', d3.forceManyBody().strength(forceManyBodyStrength));
+      simulationState.force('center', d3.forceCenter(dimensions.width / 2, dimensions.height / 2).strength(forceCenterStrength));
+      simulationState.alpha(1).restart();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceCenterStrength, forceManyBodyStrength, linkStrengthFactor]);
 
   return (
     <div id="d3-container" ref={containerRef}>
