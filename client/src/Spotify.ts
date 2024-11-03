@@ -99,6 +99,7 @@ const getRelatedArtists = async (
     const result = [] as { artistId: string, relatedArtists: SimplifiedArtist[] }[];
     const total = artistsIds.length;
 
+    const artistsNotInCache = [];
     // Caution when parallelizing this loop, the Spotify API has a rate limit
     for (const [index, id] of artistsIds.entries()) {
         // Check if we have the data in the cache
@@ -108,15 +109,18 @@ const getRelatedArtists = async (
                 artistId: id,
                 relatedArtists: cachedData.relatedArtists
             });
-            continue;
+        } else {
+            artistsNotInCache.push(id);
         }
+    }
 
-        const artists = (await api.artists.relatedArtists(id)).artists;
-        result.push({ artistId: id, relatedArtists: artists });
+    for (const [index, artistId] of artistsNotInCache.entries()) {
+        const artists = (await api.artists.relatedArtists(artistId)).artists;
+        result.push({ artistId, relatedArtists: artists });
 
         try {
             await db.spotifyGraph.put({
-                id,
+                id: artistId,
                 relatedArtists: artists
             });
         } catch (e) {
@@ -126,7 +130,7 @@ const getRelatedArtists = async (
         onProgress?.({
             phase: 'artists',
             current: index + 1,
-            total
+            total: artistsNotInCache.length
         });
     }
     return result;
